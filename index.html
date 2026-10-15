@@ -27,36 +27,10 @@
         <!-- 主要內容區 -->
         <main class="flex-1 p-4 overflow-y-auto">
             
-            <!-- Tab 1: 記帳/分帳頁面 (專注於公基金與記帳明細，不干擾其他模組) -->
+            <!-- Tab 1: 記帳/分帳頁面 -->
             <div v-show="currentTab === 'expense'">
                 
-                <!-- 公基金管理看板 -->
-                <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-4 shadow-sm">
-                    <h2 class="text-sm font-bold text-amber-900 mb-2 flex justify-between items-center">
-                        <span>💰 公基金管理看板</span>
-                        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">自動扣款</span>
-                    </h2>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <div>
-                            <label class="block text-xs font-medium text-amber-800 mb-1">公基金總金額 (EUR)</label>
-                            <input v-model.number="fundConfig.initialTotal" type="number" step="1" class="w-full p-2 text-sm border border-amber-300 rounded-lg bg-white font-bold text-amber-900">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-amber-800 mb-1">已使用總額</label>
-                            <div class="p-2 text-sm font-bold text-rose-600 bg-white border border-amber-300 rounded-lg flex items-center">
-                                € {{ totalFundUsed.toFixed(2) }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-2.5 rounded-lg border border-amber-200 flex justify-between items-center">
-                        <span class="text-xs font-medium text-gray-600">公基金剩餘金額:</span>
-                        <span class="text-base font-bold" :class="remainingFund >= 0 ? 'text-emerald-600' : 'text-red-600'">
-                            € {{ remainingFund.toFixed(2) }} <span class="text-xs font-normal text-gray-500">(約 NT$ {{ (remainingFund * rates.TWD).toFixed(0) }})</span>
-                        </span>
-                    </div>
-                </div>
-
-                <!-- 新增消費表單 -->
+                <!-- 新增消費表單 (置頂) -->
                 <div class="bg-gray-100 p-4 rounded-xl mb-4">
                     <h2 class="text-base font-bold mb-3 text-gray-800">新增消費記錄</h2>
                     <form @submit.prevent="addExpense" class="space-y-3">
@@ -82,10 +56,10 @@
                             </select>
                         </div>
 
-                        <!-- 項目名稱與動態備註提示 -->
+                        <!-- 項目名稱與動態備註提示 (改為非必填) -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">項目名稱 / 備註</label>
-                            <input v-model="newExpense.title" type="text" required 
+                            <label class="block text-xs font-medium text-gray-700 mb-1">項目名稱 / 備註 (選填)</label>
+                            <input v-model="newExpense.title" type="text" 
                                    class="w-full p-2.5 text-sm border rounded-xl bg-white" 
                                    :placeholder="getPlaceholder(newExpense.category)">
                         </div>
@@ -126,17 +100,17 @@
 
                 <!-- 消費列表 -->
                 <h3 class="text-base font-bold mb-2 text-gray-800">消費明細</h3>
-                <div v-if="expenses.length === 0" class="text-sm text-gray-500 text-center py-4 bg-white border rounded-xl">
+                <div v-if="expenses.length === 0" class="text-sm text-gray-500 text-center py-4 bg-white border rounded-xl mb-4">
                     目前尚無消費記錄
                 </div>
-                <div v-else class="space-y-2">
+                <div v-else class="space-y-2 mb-4">
                     <div v-for="(exp, index) in expenses" :key="index" class="bg-white border border-gray-200 p-3 rounded-xl flex justify-between items-center shadow-sm">
                         <div>
                             <div class="flex items-center gap-2 mb-0.5">
                                 <span class="text-xs bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold">{{ exp.date }}</span>
                                 <span class="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded font-medium">{{ exp.category }}</span>
                                 <span v-if="exp.payer === '公基金'" class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">公基金支出</span>
-                                <p class="text-sm font-bold text-gray-800">{{ exp.title }}</p>
+                                <p class="text-sm font-bold text-gray-800">{{ exp.title || exp.category }}</p>
                             </div>
                             <p class="text-xs text-gray-500">付費來源: <span class="font-medium text-gray-700">{{ exp.payer }}</span></p>
                         </div>
@@ -146,9 +120,36 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 公基金管理看板 (移至最下方) -->
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-sm">
+                    <h2 class="text-sm font-bold text-amber-900 mb-2 flex justify-between items-center">
+                        <span>💰 公基金管理看板</span>
+                        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">自動扣款</span>
+                    </h2>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-medium text-amber-800 mb-1">公基金總金額 (EUR)</label>
+                            <input v-model.number="fundConfig.initialTotal" type="number" step="1" class="w-full p-2 text-sm border border-amber-300 rounded-lg bg-white font-bold text-amber-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-amber-800 mb-1">已使用總額</label>
+                            <div class="p-2 text-sm font-bold text-rose-600 bg-white border border-amber-300 rounded-lg flex items-center">
+                                € {{ totalFundUsed.toFixed(2) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-lg border border-amber-200 flex justify-between items-center">
+                        <span class="text-xs font-medium text-gray-600">公基金剩餘金額:</span>
+                        <span class="text-base font-bold" :class="remainingFund >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                            € {{ remainingFund.toFixed(2) }} <span class="text-xs font-normal text-gray-500">(約 NT$ {{ (remainingFund * rates.TWD).toFixed(0) }})</span>
+                        </span>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Tab 2: 結算頁面 (專注於匯率與結算對帳) -->
+            <!-- Tab 2: 結算頁面 -->
             <div v-show="currentTab === 'settlement'">
                 <div class="bg-rose-50 p-3.5 rounded-xl mb-4">
                     <h2 class="text-base font-bold text-rose-800 mb-1">結算與匯率換算</h2>
@@ -257,11 +258,11 @@
                 });
 
                 const addExpense = () => {
-                    if (!newExpense.value.title || !newExpense.value.amount) return;
+                    if (!newExpense.value.amount) return;
                     expenses.value.push({
                         date: newExpense.value.date,
                         category: newExpense.value.category,
-                        title: newExpense.value.title,
+                        title: newExpense.value.title.trim(),
                         amount: Number(newExpense.value.amount),
                         currency: newExpense.value.currency,
                         payer: newExpense.value.payer
