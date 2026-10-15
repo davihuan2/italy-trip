@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>義大利10天旅行分帳系統</title>
     <!-- Tailwind CSS -->
@@ -203,21 +204,146 @@
             setup() {
                 const currentTab = ref('expense');
                 const users = ref(['成員A', '成員B', '成員C', '成員D']);
-                // 公基金排在第一位
                 const payersList = ['公基金', '成員A', '成員B', '成員C', '成員D'];
                 
-                // 行程日期清單 (12/23 - 01/03)
                 const tripDates = ['12/23', '12/24', '12/25', '12/26', '12/27', '12/28', '12/29', '12/30', '12/31', '01/01', '01/02', '01/03'];
                 
-                // 消費類別清單
                 const categories = [
                     '交通-飛機', '交通-火車', '交通-公車', '交通-租車',
                     '早餐', '午餐', '晚餐', '其他餐食購買',
                     '門票', '玩樂', '住宿', '其他'
                 ];
 
-                // 動態備註提示函數
                 const getPlaceholder = (cat) => {
                     const hints = {
                         '交通-飛機': '例如：航班編號、機場交通',
-                        '交通-火車': '例如：義大利國鐵 / 區間
+                        '交通-火車': '例如：義大利國鐵 / 區間車票',
+                        '交通-公車': '例如：市區公車 / 地鐵票',
+                        '交通-租車': '例如：租車與加油費用',
+                        '早餐': '例如：飯店早餐 / 咖啡廳',
+                        '午餐': '例如：餐廳名稱或餐點',
+                        '晚餐': '例如：晚餐餐廳預訂',
+                        '其他餐食購買': '例如：超市購物、零食水',
+                        '門票': '例如：景點門票費用',
+                        '玩樂': '例如：導覽、體驗活動',
+                        '住宿': '例如：飯店尾款或住宿費',
+                        '其他': '例如：紀念品、雜支'
+                    };
+                    return hints[cat] || '請輸入詳細消費內容...';
+                };
+
+                const fundConfig = ref({
+                    initialTotal: 1000
+                });
+
+                const rates = ref({
+                    EUR: 1,
+                    TWD: 35.0,
+                    USD: 1.08
+                });
+
+                const expenses = ref([
+                    { date: '12/23', category: '晚餐', title: '威尼斯晚餐', amount: 120, currency: 'EUR', payer: '成員A' },
+                    { date: '12/24', category: '交通-公車', title: '計程車資', amount: 35, currency: 'EUR', payer: '公基金' }
+                ]);
+
+                const newExpense = ref({
+                    date: '12/23',
+                    category: '晚餐',
+                    title: '',
+                    amount: '',
+                    currency: 'EUR',
+                    payer: '公基金'
+                });
+
+                const addExpense = () => {
+                    if (!newExpense.value.title || !newExpense.value.amount) return;
+                    expenses.value.push({
+                        date: newExpense.value.date,
+                        category: newExpense.value.category,
+                        title: newExpense.value.title,
+                        amount: Number(newExpense.value.amount),
+                        currency: newExpense.value.currency,
+                        payer: newExpense.value.payer
+                    });
+                    newExpense.value.title = '';
+                    newExpense.value.amount = '';
+                };
+
+                const deleteExpense = (index) => {
+                    expenses.value.splice(index, 1);
+                };
+
+                const totalFundUsed = computed(() => {
+                    let total = 0;
+                    expenses.value.forEach(exp => {
+                        if (exp.payer === '公基金') {
+                            let amountInEUR = exp.amount;
+                            if (exp.currency === 'TWD') {
+                                amountInEUR = exp.amount / rates.value.TWD;
+                            } else if (exp.currency === 'USD') {
+                                amountInEUR = exp.amount / rates.value.USD;
+                            }
+                            total += amountInEUR;
+                        }
+                    });
+                    return total;
+                });
+
+                const remainingFund = computed(() => {
+                    return fundConfig.value.initialTotal - totalFundUsed.value;
+                });
+
+                const settlements = computed(() => {
+                    let balances = {};
+                    users.value.forEach(u => balances[u] = 0);
+                    let totalSpent = 0;
+
+                    expenses.value.forEach(exp => {
+                        let amountInTWD = exp.amount;
+                        if (exp.currency === 'EUR') {
+                            amountInTWD = exp.amount * rates.value.TWD;
+                        } else if (exp.currency === 'USD') {
+                            amountInTWD = (exp.amount / rates.value.USD) * rates.value.TWD;
+                        }
+                        
+                        if (exp.payer === '公基金') {
+                            totalSpent += amountInTWD;
+                        } else {
+                            balances[exp.payer] += amountInTWD;
+                            totalSpent += amountInTWD;
+                        }
+                    });
+
+                    let perPerson = totalSpent / users.value.length;
+                    let netBalances = {};
+                    users.value.forEach(u => {
+                        netBalances[u] = balances[u] - perPerson;
+                    });
+
+                    let debtors = [];
+                    let creditors = [];
+
+                    users.value.forEach(u => {
+                        let diff = netBalances[u];
+                        if (diff < -0.01) debtors.push({ name: u, amount: -diff });
+                        if (diff > 0.01) creditors.push({ name: u, amount: diff });
+                    });
+
+                    let result = [];
+                    let i = 0, j = 0;
+                    while (i < debtors.length && j < creditors.length) {
+                        let d = debtors[i];
+                        let c = creditors[j];
+                        let amt = Math.min(d.amount, c.amount);
+
+                        result.push({ from: d.name, to: c.name, amount: amt });
+
+                        d.amount -= amt;
+                        c.amount -= amt;
+
+                        if (d.amount < 0.01) i++;
+                        if (c.amount < 0.01) j++;
+                    }
+                    return result;
+                });
