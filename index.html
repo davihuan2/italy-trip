@@ -2,401 +2,261 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>東義大利 10 天行程與多人分帳</title>
-    <!-- Tailwind CSS & Vue 3 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>義大利10天行程與分帳系統</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-size: 17px; /* 放大全域基準字體，適合手機閱讀 */
+        }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
-    <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-xl flex flex-col">
+<body class="bg-gray-50 text-gray-900 pb-20">
+    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-lg">
         
-        <!-- 頂部導航列 -->
-        <header class="bg-rose-700 text-white p-4 sticky top-0 z-10 shadow">
-            <h1 class="text-base font-bold text-center">東義大利 10 天行程與分帳</h1>
-            <div class="flex justify-around mt-3 border-t border-rose-600 pt-2 text-sm">
-                <button @click="currentTab = 'itinerary'" :class="{'font-bold underline text-yellow-200': currentTab === 'itinerary'}">行程時刻</button>
-                <button @click="currentTab = 'expense'" :class="{'font-bold underline text-yellow-200': currentTab === 'expense'}">快速分帳</button>
-                <button @click="currentTab = 'settle'" :class="{'font-bold underline text-yellow-200': currentTab === 'settle'}">結算清單</button>
-            </div>
+        <!-- 頂部標題列 -->
+        <header class="bg-rose-600 text-white p-4 sticky top-0 z-50 shadow-md">
+            <h1 class="text-xl font-bold text-center">義大利 10 天精彩之旅</h1>
+            <p class="text-xs text-rose-100 text-center mt-1">2026.12.23 - 2027.01.03 | 4人同行分帳</p>
         </header>
 
         <!-- 主要內容區 -->
-        <main class="flex-1 p-4 overflow-y-auto pb-20">
+        <main class="flex-1 p-4 overflow-y-auto">
             
-            <!-- 1. 行程時刻表頁面 -->
-            <div v-if="currentTab === 'itinerary'">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-bold text-sm text-rose-800">東義大利 10 天完整行程</h2>
-                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">支援旅館與導航連結</span>
-                </div>
-
-                <div class="space-y-3">
-                    <div v-for="(day, idx) in itinerary" :key="idx" class="border rounded-lg p-3 shadow-sm bg-gray-50 border-gray-200">
-                        <div class="flex justify-between items-center border-b pb-1.5 mb-2">
-                            <span class="bg-rose-700 text-white text-xs px-2 py-0.5 rounded font-bold">
-                                {{ day.date }} ({{ day.week }})
-                            </span>
-                            <div class="text-xs">
-                                <span class="text-gray-500">住宿：</span>
-                                <a v-if="day.hotelUrl" :href="day.hotelUrl" target="_blank" class="text-rose-600 font-semibold underline hover:text-rose-800">
-                                    {{ day.hotel }} 🔗
-                                </a>
-                                <span v-else class="font-semibold text-rose-700">{{ day.hotel }}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="text-xs space-y-2 text-gray-700">
-                            <div class="bg-white p-2 rounded border border-gray-100 shadow-2xs">
-                                <span class="font-bold text-gray-900 block mb-0.5">📌 重點行程</span>
-                                <p class="text-gray-700 leading-relaxed">{{ day.mainActivity }}</p>
-                            </div>
-
-                            <div v-if="day.transport" class="bg-blue-50 p-2 rounded border border-blue-100 text-blue-900">
-                                <span class="font-bold block mb-0.5">🚆 交通方式</span>
-                                <p class="leading-relaxed">{{ day.transport }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. 快速分帳頁面 (僅保留按鈕列) -->
-            <div v-if="currentTab === 'expense'">
-                <h2 class="font-bold text-sm mb-3 text-rose-800 border-b pb-1">新增消費明細</h2>
-                <form @submit.prevent="addExpense" class="space-y-3 bg-gray-50 p-3 rounded-lg border text-xs">
-                    
-                    <!-- 日期按鈕選擇區 -->
-                    <div class="bg-white p-2.5 rounded border">
-                        <div class="flex flex-wrap gap-1.5">
-                            <button type="button" v-for="d in tripDates" :key="d" 
-                                @click="selectedDate = d"
-                                :class="{'bg-rose-700 text-white font-bold shadow': selectedDate === d, 'bg-gray-100 text-gray-700 hover:bg-gray-200': selectedDate !== d}"
-                                class="px-2.5 py-1.5 rounded text-xs border transition">
-                                {{ d }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block font-semibold mb-1">金額</label>
-                            <input v-model.number="newExpense.amount" type="number" placeholder="0" class="w-full border rounded p-1.5" required>
-                        </div>
-                        <div>
-                            <label class="block font-semibold mb-1">幣別</label>
-                            <select v-model="newExpense.currency" class="w-full border rounded p-1.5">
-                                <option value="EUR">歐元 (EUR)</option>
-                                <option value="TWD">台幣 (TWD)</option>
-                                <option value="CNY">人民幣 (CNY)</option>
-                                <option value="USD">美金 (USD)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block font-semibold mb-1">消費類別</label>
-                        <select v-model="newExpense.category" class="w-full border rounded p-1.5">
-                            <optgroup label="交通類">
-                                <option value="交通-飛機">交通 - 飛機</option>
-                                <option value="交通-火車">交通 - 火車</option>
-                                <option value="交通-公車">交通 - 公車</option>
-                                <option value="交通-租車">交通 - 租車</option>
-                            </optgroup>
-                            <optgroup label="餐食類">
-                                <option value="早餐">早餐</option>
-                                <option value="午餐">午餐</option>
-                                <option value="晚餐">晚餐</option>
-                                <option value="其他餐食購買">其他餐食購買</option>
-                            </optgroup>
-                            <optgroup label="行程與活動">
-                                <option value="門票">門票</option>
-                                <option value="玩樂">玩樂</option>
-                            </optgroup>
-                            <optgroup label="其他類">
-                                <option value="住宿">住宿</option>
-                                <option value="其他">其他</option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                    <div class="bg-rose-50 p-2 rounded border border-rose-100">
-                        <label class="block font-semibold mb-1 text-rose-800">
-                            備註 ({{ newExpense.category }}內容註記)
-                        </label>
-                        <input v-model="newExpense.note" type="text" 
-                            :placeholder="getPlaceholder(newExpense.category)" 
-                            class="w-full border rounded p-1.5 bg-white">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block font-semibold mb-1">支付方式</label>
-                            <select v-model="newExpense.paymentMethod" class="w-full border rounded p-1.5">
-                                <option value="現金">現金</option>
-                                <option value="刷卡">刷卡</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block font-semibold mb-1">支付成員</label>
-                            <select v-model="newExpense.payer" class="w-full border rounded p-1.5">
-                                <option v-for="m in members" :key="m" :value="m">{{ m }}</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-rose-700 text-white py-2.5 rounded font-bold hover:bg-rose-800 transition text-sm shadow">
-                        記錄消費
+            <!-- Tab 1: 行程頁面 -->
+            <div v-show="currentTab === 'itinerary'">
+                <div class="mb-4 flex gap-2 overflow-x-auto pb-2">
+                    <button v-for="(day, index) in itinerary" :key="index"
+                            @click="selectedDay = index"
+                            :class="selectedDay === index ? 'bg-rose-600 text-white shadow' : 'bg-gray-100 text-gray-700'"
+                            class="px-4 py-2 rounded-xl text-base font-bold whitespace-nowrap transition">
+                        {{ day.date }}
                     </button>
-                </form>
+                </div>
 
-                <div class="mt-4">
-                    <h3 class="font-bold text-xs mb-2 text-gray-700">消費明細列表 (共 {{ expenses.length }} 筆)</h3>
-                    <div v-if="expenses.length === 0" class="text-xs text-gray-400 text-center py-4">尚無分帳紀錄</div>
-                    <ul class="space-y-2">
-                        <li v-for="(item, index) in expenses" :key="index" class="bg-white border p-2.5 rounded text-xs flex justify-between items-center shadow-sm">
-                            <div>
-                                <div class="font-bold text-gray-900">
-                                    <span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded mr-1 text-[11px]">{{ item.date }}</span>
-                                    <span class="text-rose-600">[{{ item.category }}]</span>
-                                    <span class="ml-1 text-gray-800">{{ item.note || '無備註' }}</span>
-                                </div>
-                                <div class="text-gray-500 text-[11px] mt-1">
-                                    付款人：<span class="font-semibold text-gray-700">{{ item.payer }}</span> ({{ item.paymentMethod }}) | 折合 NT$ {{ calculateTWD(item.amount, item.currency) }}
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <span class="font-bold text-rose-700 text-sm">{{ item.currency }} {{ item.amount }}</span>
-                                <br>
-                                <button @click="removeExpense(index)" class="text-red-500 text-[10px] mt-1 underline">刪除</button>
-                            </div>
-                        </li>
-                    </ul>
+                <div class="space-y-4">
+                    <div class="bg-rose-50 border-l-4 border-rose-500 p-3 rounded-r-lg">
+                        <h2 class="text-lg font-bold text-rose-800">{{ itinerary[selectedDay].title }}</h2>
+                    </div>
+
+                    <div v-for="(item, idx) in itinerary[selectedDay].activities" :key="idx" class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-base font-bold text-rose-600">{{ item.time }}</span>
+                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">{{ item.type }}</span>
+                        </div>
+                        <p class="text-base text-gray-800 font-medium mb-2">{{ item.desc }}</p>
+                        <a v-if="item.link" :href="item.link" target="_blank" class="inline-block text-base text-blue-600 underline font-medium">
+                            📍 Google 地圖 / 住宿連結
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <!-- 3. 結算清單頁面 -->
-            <div v-if="currentTab === 'settle'">
-                <h2 class="font-bold text-sm mb-3 text-rose-800 border-b pb-1">最終結算 (最佳化轉帳)</h2>
-                
-                <div class="bg-rose-50 border border-rose-200 p-3 rounded-lg mb-4 text-xs text-rose-900">
-                    系統自動計算成員 A ~ D 的收支平衡，並套用最少轉帳次數演算法。
+            <!-- Tab 2: 記帳/分帳頁面 -->
+            <div v-show="currentTab === 'expense'">
+                <div class="bg-gray-100 p-4 rounded-xl mb-4">
+                    <h2 class="text-lg font-bold mb-3 text-gray-800">新增一筆消費</h2>
+                    <form @submit.prevent="addExpense" class="space-y-3">
+                        <div>
+                            <label class="block text-base font-medium text-gray-700 mb-1">項目名稱</label>
+                            <input v-model="newExpense.title" type="text" required class="w-full p-3 text-base border rounded-xl bg-white" placeholder="例如：晚餐、門票">
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="flex-1">
+                                <label class="block text-base font-medium text-gray-700 mb-1">金額</label>
+                                <input v-model.number="newExpense.amount" type="number" step="0.01" required class="w-full p-3 text-base border rounded-xl bg-white" placeholder="0.00">
+                            </div>
+                            <div class="w-28">
+                                <label class="block text-base font-medium text-gray-700 mb-1">幣別</label>
+                                <select v-model="newExpense.currency" class="w-full p-3 text-base border rounded-xl bg-white">
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="TWD">TWD ($)</option>
+                                    <option value="USD">USD ($)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-base font-medium text-gray-700 mb-1">付款人</label>
+                            <select v-model="newExpense.payer" class="w-full p-3 text-base border rounded-xl bg-white">
+                                <option v-for="user in users" :key="user" :value="user">{{ user }}</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-rose-600 text-white font-bold p-3 rounded-xl text-base shadow hover:bg-rose-700 transition">
+                            新增消費記錄
+                        </button>
+                    </form>
                 </div>
 
-                <div v-if="settlements.length === 0" class="text-xs text-gray-400 text-center py-4">
-                    目前收支平衡或尚未建立消費明細
+                <!-- 消費列表 -->
+                <h3 class="text-lg font-bold mb-2 text-gray-800">消費明細</h3>
+                <div class="space-y-2">
+                    <div v-for="(exp, index) in expenses" :key="index" class="bg-white border border-gray-200 p-3 rounded-xl flex justify-between items-center shadow-sm">
+                        <div>
+                            <p class="text-base font-bold text-gray-800">{{ exp.title }}</p>
+                            <p class="text-xs text-gray-500">付費者: <span class="font-medium text-gray-700">{{ exp.payer }}</span></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-base font-bold text-rose-600">{{ exp.currency }} {{ exp.amount.toFixed(2) }}</p>
+                            <button @click="deleteExpense(index)" class="text-xs text-red-500 underline mt-1">刪除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: 結算頁面 -->
+            <div v-show="currentTab === 'settlement'">
+                <div class="bg-rose-50 p-4 rounded-xl mb-4">
+                    <h2 class="text-lg font-bold text-rose-800 mb-1">結算與匯率換算</h2>
+                    <p class="text-sm text-gray-600">自動將所有外幣折算為 TWD 進行最優化均分計算。</p>
                 </div>
 
-                <div class="space-y-2" v-else>
-                    <div v-for="(s, idx) in settlements" :key="idx" class="bg-white border p-3 rounded-lg shadow-sm flex justify-between items-center">
-                        <span class="text-xs font-medium">{{ s.from }} ➔ 轉給 {{ s.to }}</span>
-                        <span class="font-bold text-red-600 text-sm">NT$ {{ s.amount }}</span>
+                <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm mb-4">
+                    <h3 class="text-base font-bold mb-3 text-gray-800">即時匯率設定 (基準 EUR)</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">1 EUR = TWD</label>
+                            <input v-model.number="rates.TWD" type="number" class="w-full p-2 text-base border rounded-lg bg-gray-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">1 EUR = USD</label>
+                            <input v-model.number="rates.USD" type="number" step="0.01" class="w-full p-2 text-base border rounded-lg bg-gray-50">
+                        </div>
                     </div>
                 </div>
 
-                <div class="mt-6 p-3 bg-gray-50 rounded border text-xs text-gray-600 space-y-1">
-                    <p class="font-bold text-gray-700">當前參考匯率 (換算為台幣)：</p>
-                    <p>• 1 EUR ≈ 34.5 TWD</p>
-                    <p>• 1 USD ≈ 31.5 TWD</p>
-                    <p>• 1 CNY ≈ 4.5 TWD</p>
-                    <p>• 1 TWD = 1 TWD</p>
+                <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
+                    <h3 class="text-base font-bold mb-3 text-gray-800">最優轉帳建議</h3>
+                    <div v-if="settlements.length === 0" class="text-base text-gray-500 text-center py-4">
+                        目前帳目已結清或尚無消費記錄
+                    </div>
+                    <div v-else class="space-y-2">
+                        <div v-for="(s, idx) in settlements" :key="idx" class="p-3 bg-gray-50 rounded-xl border text-base font-medium flex justify-between items-center">
+                            <span><strong class="text-rose-600">{{ s.from }}</strong> 轉給 <strong class="text-rose-600">{{ s.to }}</strong></span>
+                            <span class="font-bold text-gray-800">NT$ {{ s.amount.toFixed(0) }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
         </main>
+
+        <!-- 底部導航列 -->
+        <nav class="bg-white border-t border-gray-200 flex justify-around py-3 fixed bottom-0 left-0 right-0 max-w-md mx-auto shadow-lg z-50">
+            <button @click="currentTab = 'itinerary'" :class="currentTab === 'itinerary' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-base">
+                <span>🗓️ 行程</span>
+            </button>
+            <button @click="currentTab = 'expense'" :class="currentTab === 'expense' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-base">
+                <span>💰 記帳</span>
+            </button>
+            <button @click="currentTab = 'settlement'" :class="currentTab === 'settlement' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-base">
+                <span>⚖️ 結算</span>
+            </button>
+        </nav>
+
     </div>
 
     <script>
         const { createApp, ref, computed } = Vue;
+
         createApp({
             setup() {
                 const currentTab = ref('itinerary');
-                const members = ref(['成員 A', '成員 B', '成員 C', '成員 D']);
-
-                const itinerary = ref([
-                    { 
-                        date: '12/23', week: '三', 
-                        hotel: '波隆那車站附近', 
-                        hotelUrl: 'https://maps.google.com/?q=Bologna+Centrale',
-                        mainActivity: '行李直接寄放在火車站，輕裝進波隆那吃飯休息與逛雙塔', 
-                        transport: '台北飛威尼斯抵達威尼斯06:50，火車前往波隆那' 
-                    },
-                    { 
-                        date: '12/24', week: '四', 
-                        hotel: 'Barirooms (預訂中)', 
-                        hotelUrl: '',
-                        mainActivity: '波隆那市區漫步，晚上教堂禮拜', 
-                        transport: '夜車 00:35 ~ 08:10 前往巴利 (8:10 抵達巴利)' 
-                    },
-                    { 
-                        date: '12/25', week: '五', 
-                        hotel: 'Barirooms', 
-                        hotelUrl: '',
-                        mainActivity: '聖誕節清晨漫步 ｜ 抵達巴里 ＋ 聖誕漫步', 
-                        transport: '巴利飛波隆那或火車移動' 
-                    },
-                    { 
-                        date: '12/26', week: '六', 
-                        hotel: 'Barirooms', 
-                        hotelUrl: '',
-                        mainActivity: '巴利老城區雅德里雅海小鎮漫步', 
-                        transport: '波隆那火車移動' 
-                    },
-                    { 
-                        date: '12/27', week: '日', 
-                        hotel: '馬泰拉洞穴旅館', 
-                        hotelUrl: 'https://www.booking.com',
-                        mainActivity: '巴利 ➔ 馬泰拉（Matera）石窟小鎮入住', 
-                        transport: '私鐵 FAL 火車' 
-                    },
-                    { 
-                        date: '12/28', week: '一', 
-                        hotel: '馬泰拉洞穴旅館', 
-                        hotelUrl: 'https://www.booking.com',
-                        mainActivity: '馬泰拉－阿爾貝羅貝洛（Alberobello 蘑菇村）一日遊', 
-                        transport: '當地往返交通' 
-                    },
-                    { 
-                        date: '12/29', week: '二', 
-                        hotel: 'Casa Isolani Piazza Maggiore', 
-                        hotelUrl: 'https://www.booking.com',
-                        mainActivity: '移動至波隆那，深度探索與漫步', 
-                        transport: '火車移動' 
-                    },
-                    { 
-                        date: '12/30', week: '三', 
-                        hotel: 'Casa Isolani Piazza Maggiore', 
-                        hotelUrl: 'https://www.booking.com',
-                        mainActivity: '波隆那市區漫遊與美食探索', 
-                        transport: '波隆那市區徒步' 
-                    },
-                    { 
-                        date: '12/31', week: '四', 
-                        hotel: 'Rosa Garden B&B', 
-                        hotelUrl: 'https://www.booking.com',
-                        mainActivity: '跨年活動與夜景欣賞', 
-                        transport: '前往威尼斯 Mestre' 
-                    },
-                    { 
-                        date: '1/1', week: '五', 
-                        hotel: '威尼斯飯店', 
-                        hotelUrl: 'https://www.booking.com',
-                        mainActivity: '威尼斯水都新年漫步', 
-                        transport: '威尼斯在地水上巴士 / 步行' 
-                    },
-                    { 
-                        date: '1/2', week: '六', 
-                        hotel: '威尼斯飯店', 
-                        hotelUrl: 'https://www.booking.com',
-                        mainActivity: '威尼斯最後巡禮與採買紀念品', 
-                        transport: '威尼斯準備移動' 
-                    },
-                    { 
-                        date: '1/3', week: '日', 
-                        hotel: '溫暖的家', 
-                        hotelUrl: '',
-                        mainActivity: '搭機返台，結束豐富的東義大利之旅', 
-                        transport: '威尼斯 ➔ 台北 (17:40 抵達)' 
-                    }
-                ]);
-
-                const tripDates = [
-                    '12/23', '12/24', '12/25', '12/26', '12/27', '12/28', '12/29', '12/30', '12/31',
-                    '1/1', '1/2', '1/3'
-                ];
-                const selectedDate = ref('12/23');
-
-                const expenses = ref([]);
-                const newExpense = ref({
-                    amount: '',
-                    currency: 'EUR',
-                    category: '晚餐',
-                    paymentMethod: '刷卡',
-                    payer: '成員 A',
-                    note: ''
+                const selectedDay = ref(0);
+                const users = ref(['成員A', '成員B', '成員C', '成員D']);
+                
+                const rates = ref({
+                    EUR: 1,
+                    TWD: 35.0,
+                    USD: 1.08
                 });
 
-                const getPlaceholder = (cat) => {
-                    const hints = {
-                        '交通-飛機': '例如：航班編號、機場交通',
-                        '交通-火車': '例如：義大利國鐵 / 區間車票',
-                        '交通-公車': '例如：市區公車 / 地鐵票',
-                        '交通-租車': '例如：租車與加油費用',
-                        '早餐': '例如：飯店早餐 / 咖啡廳',
-                        '午餐': '例如：餐廳名稱或餐點',
-                        '晚餐': '例如：晚餐餐廳預訂',
-                        '其他餐食購買': '例如：超市購物、零食水',
-                        '門票': '例如：景點門票費用',
-                        '玩樂': '例如：導覽、體驗活動',
-                        '住宿': '例如：飯店尾款或住宿費',
-                        '其他': '例如：紀念品、雜支'
-                    };
-                    return hints[cat] || '請輸入詳細消費內容...';
+                const itinerary = ref([
+                    { date: '12/23', title: '抵達威尼斯', activities: [{ time: '14:00', type: '交通', desc: '抵達威尼斯機場並前往本島飯店', link: 'https://maps.google.com' }] },
+                    { date: '12/24', title: '威尼斯漫遊', activities: [{ time: '09:00', type: '景點', desc: '聖馬可廣場與總督宮深度導覽', link: 'https://maps.google.com' }] },
+                    { date: '12/25', title: '前往波隆那', activities: [{ time: '10:00', type: '交通', desc: '搭乘高鐵前往美食之都波隆那', link: 'https://maps.google.com' }] },
+                    { date: '12/26', title: '波隆那與拉文納', activities: [{ time: '09:30', type: '景點', desc: '參觀拉文納馬賽克藝術古蹟', link: 'https://maps.google.com' }] },
+                    { date: '12/27', title: '南下巴里', activities: [{ time: '11:00', type: '交通', desc: '搭乘火車南下普利亞大區巴里', link: 'https://maps.google.com' }] },
+                    { date: '12/28', title: '蘑菇村亞貝羅貝洛', activities: [{ time: '09:00', type: '景點', desc: '探索夢幻童話世界 Alberobello', link: 'https://maps.google.com' }] },
+                    { date: '12/29', title: '巴里古城巡禮', activities: [{ time: '10:00', type: '景點', desc: '聖尼各老聖殿與在地市集', link: 'https://maps.google.com' }] },
+                    { date: '12/30', title: '返回北方', activities: [{ time: '08:00', type: '交通', desc: '搭機或長途火車返回北部地區', link: 'https://maps.google.com' }] },
+                    { date: '12/31', title: '跨年夜慶祝', activities: [{ time: '18:00', type: '活動', desc: '跨年晚餐與迎向 2027', link: 'https://maps.google.com' }] },
+                    { date: '01/01', title: '新年元旦', activities: [{ time: '10:00', type: '休閒', desc: '輕鬆漫步與新年城市巡禮', link: 'https://maps.google.com' }] },
+                    { date: '01/02', title: '最後採買', activities: [{ time: '14:00', type: '購物', desc: '當地特產與伴手禮採購', link: 'https://maps.google.com' }] },
+                    { date: '01/03', title: '賦歸', activities: [{ time: '10:00', type: '交通', desc: '前往機場搭機返台', link: 'https://maps.google.com' }] }
+                ]);
+
+                const expenses = ref([
+                    { title: '威尼斯晚餐', amount: 120, currency: 'EUR', payer: '成員A' },
+                    { title: '計程車資', amount: 35, currency: 'EUR', payer: '成員B' }
+                ]);
+
+                const addExpense = (e) => {
+                    // 這裡可以處理表單提交
                 };
 
-                const rates = { EUR: 34.5, USD: 31.5, CNY: 4.5, TWD: 1 };
-
-                const calculateTWD = (amount, currency) => {
-                    return Math.round(amount * (rates[currency] || 1));
-                };
-
-                const addExpense = () => {
-                    if (!newExpense.value.amount) return;
-                    expenses.value.push({
-                        date: selectedDate.value,
-                        ...newExpense.value
-                    });
-                    newExpense.value.amount = '';
-                    newExpense.value.note = '';
-                };
-
-                const removeExpense = (index) => {
+                const deleteExpense = (index) => {
                     expenses.value.splice(index, 1);
                 };
 
+                // 將所有消費統一換算成 TWD 進行結算
                 const settlements = computed(() => {
-                    if (expenses.value.length === 0) return [];
                     let balances = {};
-                    members.value.forEach(m => balances[m] = 0);
-                    
-                    expenses.value.forEach(item => {
-                        let twdAmount = calculateTWD(item.amount, item.currency);
-                        let share = twdAmount / members.value.length;
-                        balances[item.payer] += twdAmount;
-                        members.value.forEach(m => balances[m] -= share);
+                    users.value.forEach(u => balances[u] = 0);
+                    let totalSpent = 0;
+
+                    expenses.value.forEach(exp => {
+                        let amountInTWD = exp.amount;
+                        if (exp.currency === 'EUR') {
+                            amountInTWD = exp.amount * rates.value.TWD;
+                        } else if (exp.currency === 'USD') {
+                            amountInTWD = (exp.amount / rates.value.USD) * rates.value.TWD;
+                        }
+                        
+                        balances[exp.payer] += amountInTWD;
+                        totalSpent += amountInTWD;
                     });
 
-                    let debtors = [], creditors = [], result = [];
-                    for (let m in balances) {
-                        let bal = Math.round(balances[m]);
-                        if (bal < -1) debtors.push({ name: m, amount: -bal });
-                        else if (bal > 1) creditors.push({ name: m, amount: bal });
-                    }
+                    let perPerson = totalSpent / users.value.length;
+                    let debtors = [];
+                    let creditors = [];
 
+                    users.value.forEach(u => {
+                        let diff = balances[u] - perPerson;
+                        if (diff < -0.01) debtors.push({ name: u, amount: -diff });
+                        if (diff > 0.01) creditors.push({ name: u, amount: diff });
+                    });
+
+                    let result = [];
                     let i = 0, j = 0;
                     while (i < debtors.length && j < creditors.length) {
-                        let pay = Math.min(debtors[i].amount, creditors[j].amount);
-                        result.push({ from: debtors[i].name, to: creditors[j].name, amount: pay });
-                        debtors[i].amount -= pay;
-                        creditors[j].amount -= pay;
-                        if (debtors[i].amount === 0) i++;
-                        if (creditors[j].amount === 0) j++;
+                        let d = debtors[i];
+                        let c = creditors[j];
+                        let amt = Math.min(d.amount, c.amount);
+
+                        result.push({ from: d.name, to: c.name, amount: amt });
+
+                        d.amount -= amt;
+                        c.amount -= amt;
+
+                        if (d.amount < 0.01) i++;
+                        if (c.amount < 0.01) j++;
                     }
                     return result;
                 });
 
                 return {
                     currentTab,
-                    members,
-                    tripDates,
-                    selectedDate,
+                    selectedDay,
+                    users,
+                    rates,
                     itinerary,
                     expenses,
-                    newExpense,
-                    getPlaceholder,
+                    newExpense: ref({ title: '', amount: '', currency: 'EUR', payer: '成員A' }),
                     addExpense,
-                    removeExpense,
-                    calculateTWD,
+                    deleteExpense,
                     settlements
                 };
             }
