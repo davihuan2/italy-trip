@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>義大利10天旅行分帳系統</title>
     <!-- Tailwind CSS -->
@@ -27,7 +27,7 @@
         <!-- 主要內容區 -->
         <main class="flex-1 p-4 overflow-y-auto">
             
-            <!-- Tab 1: 記帳/分帳頁面 -->
+            <!-- Tab 1: 記帳/分帳頁面 (專注於公基金與記帳明細，不干擾其他模組) -->
             <div v-show="currentTab === 'expense'">
                 
                 <!-- 公基金管理看板 -->
@@ -148,7 +148,7 @@
                 </div>
             </div>
 
-            <!-- Tab 2: 結算頁面 -->
+            <!-- Tab 2: 結算頁面 (專注於匯率與結算對帳) -->
             <div v-show="currentTab === 'settlement'">
                 <div class="bg-rose-50 p-3.5 rounded-xl mb-4">
                     <h2 class="text-base font-bold text-rose-800 mb-1">結算與匯率換算</h2>
@@ -347,3 +347,26 @@
                     }
                     return result;
                 });
+
+                return {
+                    currentTab,
+                    users,
+                    payersList,
+                    tripDates,
+                    categories,
+                    getPlaceholder,
+                    fundConfig,
+                    rates,
+                    expenses,
+                    newExpense,
+                    addExpense,
+                    deleteExpense,
+                    totalFundUsed,
+                    remainingFund,
+                    settlements
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
