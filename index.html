@@ -61,19 +61,6 @@
                     <h2 class="text-base font-bold mb-3 text-gray-800">新增消費記錄</h2>
                     <form @submit.prevent="addExpense" class="space-y-3">
                         
-                        <!-- 交易類型選擇 -->
-                        <div class="flex bg-gray-200 p-1 rounded-xl">
-                            <button type="button" @click="newExpense.type = 'normal'" 
-                                    :class="newExpense.type === 'normal' ? 'bg-white text-rose-600 shadow font-bold' : 'text-gray-600'"
-                                    class="flex-1 py-1.5 text-xs rounded-lg transition">一般代墊</button>
-                            <button type="button" @click="newExpense.type = 'fund_pool'" 
-                                    :class="newExpense.type === 'fund_pool' ? 'bg-white text-rose-600 shadow font-bold' : 'text-gray-600'"
-                                    class="flex-1 py-1.5 text-xs rounded-lg transition">繳交公基金</button>
-                            <button type="button" @click="newExpense.type = 'fund_use'" 
-                                    :class="newExpense.type === 'fund_use' ? 'bg-white text-rose-600 shadow font-bold' : 'text-gray-600'"
-                                    class="flex-1 py-1.5 text-xs rounded-lg transition">公基金支出</button>
-                        </div>
-
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">消費日期</label>
                             <select v-model="newExpense.date" class="w-full p-2.5 text-sm border rounded-xl bg-white">
@@ -81,9 +68,10 @@
                             </select>
                         </div>
 
+                        <!-- 項目名稱與備註欄 -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">項目名稱</label>
-                            <input v-model="newExpense.title" type="text" required class="w-full p-2.5 text-sm border rounded-xl bg-white" :placeholder="newExpense.type === 'fund_pool' ? '例如：每人繳交 200 歐元公基金' : '例如：晚餐、門票、包車'">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">項目名稱 / 備註</label>
+                            <input v-model="newExpense.title" type="text" required class="w-full p-2.5 text-sm border rounded-xl bg-white" placeholder="例如：晚餐、門票、包車費">
                         </div>
 
                         <div class="flex gap-2">
@@ -101,39 +89,15 @@
                             </div>
                         </div>
 
-                        <!-- 依據交易類型動態顯示按鈕 -->
-                        <div v-if="newExpense.type !== 'fund_use'">
-                            <label class="block text-xs font-medium text-gray-700 mb-1">付款人 (誰付錢)</label>
-                            <div class="grid grid-cols-4 gap-1.5">
-                                <button type="button" v-for="user in users" :key="user"
-                                        @click="newExpense.payer = user"
-                                        :class="newExpense.payer === user ? 'bg-rose-600 text-white font-bold shadow' : 'bg-white text-gray-700 border'"
+                        <!-- 付款人按鈕選擇 (包含成員與公基金) -->
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">付款方式 / 誰付錢</label>
+                            <div class="grid grid-cols-5 gap-1.5">
+                                <button type="button" v-for="payer in payersList" :key="payer"
+                                        @click="newExpense.payer = payer"
+                                        :class="newExpense.payer === payer ? 'bg-rose-600 text-white font-bold shadow' : 'bg-white text-gray-700 border'"
                                         class="py-2 text-xs rounded-xl transition">
-                                    {{ user }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div v-if="newExpense.type === 'fund_pool'">
-                            <label class="block text-xs font-medium text-gray-700 mb-1">公基金收款人 (誰保管)</label>
-                            <div class="grid grid-cols-4 gap-1.5">
-                                <button type="button" v-for="user in users" :key="user"
-                                        @click="newExpense.receiver = user"
-                                        :class="newExpense.receiver === user ? 'bg-rose-600 text-white font-bold shadow' : 'bg-white text-gray-700 border'"
-                                        class="py-2 text-xs rounded-xl transition">
-                                    {{ user }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div v-if="newExpense.type === 'fund_use'">
-                            <label class="block text-xs font-medium text-gray-700 mb-1">公基金保管人 (從誰的公基金扣款)</label>
-                            <div class="grid grid-cols-4 gap-1.5">
-                                <button type="button" v-for="user in users" :key="user"
-                                        @click="newExpense.payer = user"
-                                        :class="newExpense.payer === user ? 'bg-rose-600 text-white font-bold shadow' : 'bg-white text-gray-700 border'"
-                                        class="py-2 text-xs rounded-xl transition">
-                                    {{ user }}
+                                    {{ payer }}
                                 </button>
                             </div>
                         </div>
@@ -154,15 +118,10 @@
                         <div>
                             <div class="flex items-center gap-2 mb-0.5">
                                 <span class="text-xs bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold">{{ exp.date }}</span>
-                                <span v-if="exp.type === 'fund_pool'" class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">繳公基金</span>
-                                <span v-if="exp.type === 'fund_use'" class="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold">公基金支出</span>
+                                <span v-if="exp.payer === '公基金'" class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">公基金支出</span>
                                 <p class="text-sm font-bold text-gray-800">{{ exp.title }}</p>
                             </div>
-                            <p class="text-xs text-gray-500">
-                                <span v-if="exp.type === 'normal'">付費: {{ exp.payer }}</span>
-                                <span v-if="exp.type === 'fund_pool'">{{ exp.payer }} 繳給 {{ exp.receiver }}</span>
-                                <span v-if="exp.type === 'fund_use'">從 {{ exp.payer }} 的公基金扣款</span>
-                            </p>
+                            <p class="text-xs text-gray-500">付費來源: <span class="font-medium text-gray-700">{{ exp.payer }}</span></p>
                         </div>
                         <div class="text-right">
                             <p class="text-sm font-bold text-rose-600">{{ exp.currency }} {{ exp.amount.toFixed(2) }}</p>
@@ -176,7 +135,7 @@
             <div v-show="currentTab === 'settlement'">
                 <div class="bg-rose-50 p-3.5 rounded-xl mb-4">
                     <h2 class="text-base font-bold text-rose-800 mb-1">結算與匯率換算</h2>
-                    <p class="text-xs text-gray-600">自動將一般代墊與公基金支出納入均分計算，並給出最佳轉帳建議。</p>
+                    <p class="text-xs text-gray-600">自動將個人代墊與公基金支出納入總花費均分，並給出最佳轉帳建議。</p>
                 </div>
 
                 <div class="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm mb-4">
@@ -232,6 +191,7 @@
                 const currentTab = ref('itinerary');
                 const selectedDay = ref(0);
                 const users = ref(['成員A', '成員B', '成員C', '成員D']);
+                const payersList = ['成員A', '成員B', '成員C', '成員D', '公基金'];
                 
                 const rates = ref({
                     EUR: 1,
@@ -255,30 +215,26 @@
                 ]);
 
                 const expenses = ref([
-                    { date: '12/23', type: 'normal', title: '威尼斯晚餐', amount: 120, currency: 'EUR', payer: '成員A', receiver: '' },
-                    { date: '12/24', type: 'normal', title: '計程車資', amount: 35, currency: 'EUR', payer: '成員B', receiver: '' }
+                    { date: '12/23', title: '威尼斯晚餐', amount: 120, currency: 'EUR', payer: '成員A' },
+                    { date: '12/24', title: '計程車資', amount: 35, currency: 'EUR', payer: '公基金' }
                 ]);
 
                 const newExpense = ref({
-                    type: 'normal', // normal, fund_pool, fund_use
                     date: '12/23',
                     title: '',
                     amount: '',
                     currency: 'EUR',
-                    payer: '成員A',
-                    receiver: '成員A'
+                    payer: '成員A'
                 });
 
                 const addExpense = () => {
                     if (!newExpense.value.title || !newExpense.value.amount) return;
                     expenses.value.push({
-                        type: newExpense.value.type,
                         date: newExpense.value.date,
                         title: newExpense.value.title,
                         amount: Number(newExpense.value.amount),
                         currency: newExpense.value.currency,
-                        payer: newExpense.value.payer,
-                        receiver: newExpense.value.receiver
+                        payer: newExpense.value.payer
                     });
                     newExpense.value.title = '';
                     newExpense.value.amount = '';
@@ -288,7 +244,7 @@
                     expenses.value.splice(index, 1);
                 };
 
-                // 結算與公基金邏輯計算
+                // 結算邏輯：若是由成員付款，該成員增加墊付金額；若是由公基金付款，則直接列入總花費並由 4 人均分
                 const settlements = computed(() => {
                     let balances = {};
                     users.value.forEach(u => balances[u] = 0);
@@ -302,17 +258,12 @@
                             amountInTWD = (exp.amount / rates.value.USD) * rates.value.TWD;
                         }
                         
-                        if (exp.type === 'normal') {
-                            // 一般代墊：付款人先墊付，全體均分
-                            balances[exp.payer] += amountInTWD;
+                        if (exp.payer === '公基金') {
+                            // 公基金支出：不增加特定個人的墊付，但會計入總花費中由大家均分
                             totalSpent += amountInTWD;
-                        } else if (exp.type === 'fund_pool') {
-                            // 繳交公基金：交錢給保管人（不計入總消費均分，但保管人多收了錢需吐出來或折抵）
-                            balances[exp.payer] -= amountInTWD;
-                            balances[exp.receiver] += amountInTWD;
-                        } else if (exp.type === 'fund_use') {
-                            // 公基金支出：從保管人的公基金扣款，全體均分
-                            balances[exp.payer] += amountInTWD; // 保管人墊了這筆公基金支出
+                        } else {
+                            // 成員代墊：該成員墊付額增加，並計入總花費
+                            balances[exp.payer] += amountInTWD;
                             totalSpent += amountInTWD;
                         }
                     });
@@ -320,7 +271,6 @@
                     let perPerson = totalSpent / users.value.length;
                     let netBalances = {};
                     users.value.forEach(u => {
-                        // 最終淨額 = 實際墊付/持有結餘 - 應分攤額
                         netBalances[u] = balances[u] - perPerson;
                     });
 
@@ -355,6 +305,7 @@
                     currentTab,
                     selectedDay,
                     users,
+                    payersList,
                     rates,
                     itinerary,
                     expenses,
