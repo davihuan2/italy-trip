@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>義大利10天行程與分帳系統</title>
+    <title>義大利10天旅行分帳系統</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Vue 3 -->
@@ -19,56 +19,62 @@
         
         <!-- 頂部標題列 -->
         <header class="bg-rose-600 text-white p-3.5 sticky top-0 z-50 shadow-md">
-            <h1 class="text-lg font-bold text-center">義大利 10 天精彩之旅</h1>
-            <p class="text-xs text-rose-100 text-center mt-0.5">2026.12.23 - 2027.01.03 | 4人同行分帳</p>
+            <h1 class="text-lg font-bold text-center">義大利 10 天旅行分帳</h1>
+            <p class="text-xs text-rose-100 text-center mt-0.5">2026.12.23 - 2027.01.03 | 4人同行</p>
         </header>
 
         <!-- 主要內容區 -->
         <main class="flex-1 p-4 overflow-y-auto">
             
-            <!-- Tab 1: 行程頁面 -->
-            <div v-show="currentTab === 'itinerary'">
-                <div class="mb-4 flex gap-2 overflow-x-auto pb-2">
-                    <button v-for="(day, index) in itinerary" :key="index"
-                            @click="selectedDay = index"
-                            :class="selectedDay === index ? 'bg-rose-600 text-white shadow' : 'bg-gray-100 text-gray-700'"
-                            class="px-3.5 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition">
-                        {{ day.date }}
-                    </button>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="bg-rose-50 border-l-4 border-rose-500 p-2.5 rounded-r-lg">
-                        <h2 class="text-base font-bold text-rose-800">{{ itinerary[selectedDay].title }}</h2>
-                    </div>
-
-                    <div v-for="(item, idx) in itinerary[selectedDay].activities" :key="idx" class="bg-white border border-gray-200 rounded-xl p-3.5 shadow-sm">
-                        <div class="flex justify-between items-start mb-1.5">
-                            <span class="text-sm font-bold text-rose-600">{{ item.time }}</span>
-                            <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{{ item.type }}</span>
-                        </div>
-                        <p class="text-sm text-gray-800 font-medium mb-2">{{ item.desc }}</p>
-                        <a v-if="item.link" :href="item.link" target="_blank" class="inline-block text-xs text-blue-600 underline font-medium">
-                            📍 Google 地圖 / 住宿連結
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 2: 記帳/分帳頁面 -->
+            <!-- Tab 1: 記帳/分帳頁面 -->
             <div v-show="currentTab === 'expense'">
+                
+                <!-- 公基金管理看板 -->
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-4 shadow-sm">
+                    <h2 class="text-sm font-bold text-amber-900 mb-2 flex justify-between items-center">
+                        <span>💰 公基金管理看板</span>
+                        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">自動扣款</span>
+                    </h2>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-medium text-amber-800 mb-1">公基金總金額 (EUR)</label>
+                            <input v-model.number="fundConfig.initialTotal" type="number" step="1" class="w-full p-2 text-sm border border-amber-300 rounded-lg bg-white font-bold text-amber-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-amber-800 mb-1">已使用總額</label>
+                            <div class="p-2 text-sm font-bold text-rose-600 bg-white border border-amber-300 rounded-lg flex items-center">
+                                € {{ totalFundUsed.toFixed(2) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-lg border border-amber-200 flex justify-between items-center">
+                        <span class="text-xs font-medium text-gray-600">公基金剩餘金額:</span>
+                        <span class="text-base font-bold" :class="remainingFund >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                            € {{ remainingFund.toFixed(2) }} <span class="text-xs font-normal text-gray-500">(約 NT$ {{ (remainingFund * rates.TWD).toFixed(0) }})</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 新增消費表單 -->
                 <div class="bg-gray-100 p-4 rounded-xl mb-4">
                     <h2 class="text-base font-bold mb-3 text-gray-800">新增消費記錄</h2>
                     <form @submit.prevent="addExpense" class="space-y-3">
                         
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">消費日期</label>
-                            <select v-model="newExpense.date" class="w-full p-2.5 text-sm border rounded-xl bg-white">
-                                <option v-for="day in itinerary" :key="day.date" :value="day.date">{{ day.date }} ({{ day.title }})</option>
-                            </select>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">消費日期</label>
+                                <select v-model="newExpense.date" class="w-full p-2.5 text-sm border rounded-xl bg-white">
+                                    <option v-for="d in tripDates" :key="d" :value="d">{{ d }}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">消費類別</label>
+                                <select v-model="newExpense.category" class="w-full p-2.5 text-sm border rounded-xl bg-white">
+                                    <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                                </select>
+                            </div>
                         </div>
 
-                        <!-- 項目名稱與備註欄 -->
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">項目名稱 / 備註</label>
                             <input v-model="newExpense.title" type="text" required class="w-full p-2.5 text-sm border rounded-xl bg-white" placeholder="例如：晚餐、門票、包車費">
@@ -89,7 +95,6 @@
                             </div>
                         </div>
 
-                        <!-- 付款人按鈕選擇 (包含成員與公基金) -->
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">付款方式 / 誰付錢</label>
                             <div class="grid grid-cols-5 gap-1.5">
@@ -118,6 +123,7 @@
                         <div>
                             <div class="flex items-center gap-2 mb-0.5">
                                 <span class="text-xs bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold">{{ exp.date }}</span>
+                                <span class="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded font-medium">{{ exp.category }}</span>
                                 <span v-if="exp.payer === '公基金'" class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">公基金支出</span>
                                 <p class="text-sm font-bold text-gray-800">{{ exp.title }}</p>
                             </div>
@@ -131,7 +137,7 @@
                 </div>
             </div>
 
-            <!-- Tab 3: 結算頁面 -->
+            <!-- Tab 2: 結算頁面 -->
             <div v-show="currentTab === 'settlement'">
                 <div class="bg-rose-50 p-3.5 rounded-xl mb-4">
                     <h2 class="text-base font-bold text-rose-800 mb-1">結算與匯率換算</h2>
@@ -170,14 +176,11 @@
 
         <!-- 底部導航列 -->
         <nav class="bg-white border-t border-gray-200 flex justify-around py-2.5 fixed bottom-0 left-0 right-0 max-w-md mx-auto shadow-lg z-50">
-            <button @click="currentTab = 'itinerary'" :class="currentTab === 'itinerary' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-sm">
-                <span>🗓️ 行程</span>
+            <button @click="currentTab = 'expense'" :class="currentTab === 'expense' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-sm flex-1">
+                <span>💰 記帳明細</span>
             </button>
-            <button @click="currentTab = 'expense'" :class="currentTab === 'expense' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-sm">
-                <span>💰 記帳</span>
-            </button>
-            <button @click="currentTab = 'settlement'" :class="currentTab === 'settlement' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-sm">
-                <span>⚖️ 結算</span>
+            <button @click="currentTab = 'settlement'" :class="currentTab === 'settlement' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-sm flex-1">
+                <span>⚖️ 結算對帳</span>
             </button>
         </nav>
 
@@ -188,39 +191,34 @@
 
         createApp({
             setup() {
-                const currentTab = ref('itinerary');
-                const selectedDay = ref(0);
+                const currentTab = ref('expense');
                 const users = ref(['成員A', '成員B', '成員C', '成員D']);
                 const payersList = ['成員A', '成員B', '成員C', '成員D', '公基金'];
                 
+                // 行程日期清單 (12/23 - 01/03)
+                const tripDates = ['12/23', '12/24', '12/25', '12/26', '12/27', '12/28', '12/29', '12/30', '12/31', '01/01', '01/02', '01/03'];
+                
+                // 消費類別清單
+                const categories = ['餐飲美食', '交通移動', '景點門票', '住宿飯店', '購物伴手禮', '其他雜支'];
+
+                const fundConfig = ref({
+                    initialTotal: 1000 // 預設公基金總額 1000 歐元
+                });
+
                 const rates = ref({
                     EUR: 1,
                     TWD: 35.0,
                     USD: 1.08
                 });
 
-                const itinerary = ref([
-                    { date: '12/23', title: '抵達威尼斯', activities: [{ time: '14:00', type: '交通', desc: '抵達威尼斯機場並前往本島飯店', link: 'https://maps.google.com' }] },
-                    { date: '12/24', title: '威尼斯漫遊', activities: [{ time: '09:00', type: '景點', desc: '聖馬可廣場與總督宮深度導覽', link: 'https://maps.google.com' }] },
-                    { date: '12/25', title: '前往波隆那', activities: [{ time: '10:00', type: '交通', desc: '搭乘高鐵前往美食之都波隆那', link: 'https://maps.google.com' }] },
-                    { date: '12/26', title: '波隆那與拉文納', activities: [{ time: '09:30', type: '景點', desc: '參觀拉文納馬賽克藝術古蹟', link: 'https://maps.google.com' }] },
-                    { date: '12/27', title: '南下巴里', activities: [{ time: '11:00', type: '交通', desc: '搭乘火車南下普利亞大區巴里', link: 'https://maps.google.com' }] },
-                    { date: '12/28', title: '蘑菇村亞貝羅貝洛', activities: [{ time: '09:00', type: '景點', desc: '探索夢幻童話世界 Alberobello', link: 'https://maps.google.com' }] },
-                    { date: '12/29', title: '巴里古城巡禮', activities: [{ time: '10:00', type: '景點', desc: '聖尼各老聖殿與在地市集', link: 'https://maps.google.com' }] },
-                    { date: '12/30', title: '返回北方', activities: [{ time: '08:00', type: '交通', desc: '搭機或長途火車返回北部地區', link: 'https://maps.google.com' }] },
-                    { date: '12/31', title: '跨年夜慶祝', activities: [{ time: '18:00', type: '活動', desc: '跨年晚餐與迎向 2027', link: 'https://maps.google.com' }] },
-                    { date: '01/01', title: '新年元旦', activities: [{ time: '10:00', type: '休閒', desc: '輕鬆漫步與新年城市巡禮', link: 'https://maps.google.com' }] },
-                    { date: '01/02', title: '最後採買', activities: [{ time: '14:00', type: '購物', desc: '當地特產與伴手禮採購', link: 'https://maps.google.com' }] },
-                    { date: '01/03', title: '賦歸', activities: [{ time: '10:00', type: '交通', desc: '前往機場搭機返台', link: 'https://maps.google.com' }] }
-                ]);
-
                 const expenses = ref([
-                    { date: '12/23', title: '威尼斯晚餐', amount: 120, currency: 'EUR', payer: '成員A' },
-                    { date: '12/24', title: '計程車資', amount: 35, currency: 'EUR', payer: '公基金' }
+                    { date: '12/23', category: '餐飲美食', title: '威尼斯晚餐', amount: 120, currency: 'EUR', payer: '成員A' },
+                    { date: '12/24', category: '交通移動', title: '計程車資', amount: 35, currency: 'EUR', payer: '公基金' }
                 ]);
 
                 const newExpense = ref({
                     date: '12/23',
+                    category: '餐飲美食',
                     title: '',
                     amount: '',
                     currency: 'EUR',
@@ -231,6 +229,7 @@
                     if (!newExpense.value.title || !newExpense.value.amount) return;
                     expenses.value.push({
                         date: newExpense.value.date,
+                        category: newExpense.value.category,
                         title: newExpense.value.title,
                         amount: Number(newExpense.value.amount),
                         currency: newExpense.value.currency,
@@ -244,7 +243,29 @@
                     expenses.value.splice(index, 1);
                 };
 
-                // 結算邏輯：若是由成員付款，該成員增加墊付金額；若是由公基金付款，則直接列入總花費並由 4 人均分
+                // 計算已使用的公基金總額（統一換算成 EUR 顯示）
+                const totalFundUsed = computed(() => {
+                    let total = 0;
+                    expenses.value.forEach(exp => {
+                        if (exp.payer === '公基金') {
+                            let amountInEUR = exp.amount;
+                            if (exp.currency === 'TWD') {
+                                amountInEUR = exp.amount / rates.value.TWD;
+                            } else if (exp.currency === 'USD') {
+                                amountInEUR = exp.amount / rates.value.USD;
+                            }
+                            total += amountInEUR;
+                        }
+                    });
+                    return total;
+                });
+
+                // 計算剩餘公基金金額 (EUR)
+                const remainingFund = computed(() => {
+                    return fundConfig.value.initialTotal - totalFundUsed.value;
+                });
+
+                // 結算邏輯
                 const settlements = computed(() => {
                     let balances = {};
                     users.value.forEach(u => balances[u] = 0);
@@ -259,10 +280,8 @@
                         }
                         
                         if (exp.payer === '公基金') {
-                            // 公基金支出：不增加特定個人的墊付，但會計入總花費中由大家均分
                             totalSpent += amountInTWD;
                         } else {
-                            // 成員代墊：該成員墊付額增加，並計入總花費
                             balances[exp.payer] += amountInTWD;
                             totalSpent += amountInTWD;
                         }
@@ -303,15 +322,18 @@
 
                 return {
                     currentTab,
-                    selectedDay,
                     users,
                     payersList,
+                    tripDates,
+                    categories,
+                    fundConfig,
                     rates,
-                    itinerary,
                     expenses,
                     newExpense,
                     addExpense,
                     deleteExpense,
+                    totalFundUsed,
+                    remainingFund,
                     settlements
                 };
             }
