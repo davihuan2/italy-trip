@@ -60,24 +60,33 @@
                     <h2 class="text-base font-bold mb-3 text-gray-800">新增消費記錄</h2>
                     <form @submit.prevent="addExpense" class="space-y-3">
                         
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">消費日期</label>
-                                <select v-model="newExpense.date" class="w-full p-2.5 text-sm border rounded-xl bg-white">
-                                    <option v-for="d in tripDates" :key="d" :value="d">{{ d }}</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700 mb-1">消費類別</label>
-                                <select v-model="newExpense.category" class="w-full p-2.5 text-sm border rounded-xl bg-white">
-                                    <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                                </select>
+                        <!-- 消費日期 (按鈕點擊選擇) -->
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">消費日期</label>
+                            <div class="flex gap-1 overflow-x-auto pb-1">
+                                <button type="button" v-for="d in tripDates" :key="d"
+                                        @click="newExpense.date = d"
+                                        :class="newExpense.date === d ? 'bg-rose-600 text-white font-bold shadow' : 'bg-white text-gray-700 border'"
+                                        class="px-2.5 py-1.5 text-xs rounded-lg whitespace-nowrap transition flex-1">
+                                    {{ d }}
+                                </button>
                             </div>
                         </div>
 
+                        <!-- 消費類別 -->
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">消費類別</label>
+                            <select v-model="newExpense.category" class="w-full p-2.5 text-sm border rounded-xl bg-white">
+                                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                            </select>
+                        </div>
+
+                        <!-- 項目名稱與動態備註提示 -->
                         <div>
                             <label class="block text-xs font-medium text-gray-700 mb-1">項目名稱 / 備註</label>
-                            <input v-model="newExpense.title" type="text" required class="w-full p-2.5 text-sm border rounded-xl bg-white" placeholder="例如：晚餐、門票、包車費">
+                            <input v-model="newExpense.title" type="text" required 
+                                   class="w-full p-2.5 text-sm border rounded-xl bg-white" 
+                                   :placeholder="getPlaceholder(newExpense.category)">
                         </div>
 
                         <div class="flex gap-2">
@@ -95,8 +104,9 @@
                             </div>
                         </div>
 
+                        <!-- 付款方式 (公基金排第一位) -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">付款方式 / 誰付錢</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">付款方式</label>
                             <div class="grid grid-cols-5 gap-1.5">
                                 <button type="button" v-for="payer in payersList" :key="payer"
                                         @click="newExpense.payer = payer"
@@ -193,151 +203,21 @@
             setup() {
                 const currentTab = ref('expense');
                 const users = ref(['成員A', '成員B', '成員C', '成員D']);
-                const payersList = ['成員A', '成員B', '成員C', '成員D', '公基金'];
+                // 公基金排在第一位
+                const payersList = ['公基金', '成員A', '成員B', '成員C', '成員D'];
                 
                 // 行程日期清單 (12/23 - 01/03)
                 const tripDates = ['12/23', '12/24', '12/25', '12/26', '12/27', '12/28', '12/29', '12/30', '12/31', '01/01', '01/02', '01/03'];
                 
                 // 消費類別清單
-                const categories = ['餐飲美食', '交通移動', '景點門票', '住宿飯店', '購物伴手禮', '其他雜支'];
+                const categories = [
+                    '交通-飛機', '交通-火車', '交通-公車', '交通-租車',
+                    '早餐', '午餐', '晚餐', '其他餐食購買',
+                    '門票', '玩樂', '住宿', '其他'
+                ];
 
-                const fundConfig = ref({
-                    initialTotal: 1000 // 預設公基金總額 1000 歐元
-                });
-
-                const rates = ref({
-                    EUR: 1,
-                    TWD: 35.0,
-                    USD: 1.08
-                });
-
-                const expenses = ref([
-                    { date: '12/23', category: '餐飲美食', title: '威尼斯晚餐', amount: 120, currency: 'EUR', payer: '成員A' },
-                    { date: '12/24', category: '交通移動', title: '計程車資', amount: 35, currency: 'EUR', payer: '公基金' }
-                ]);
-
-                const newExpense = ref({
-                    date: '12/23',
-                    category: '餐飲美食',
-                    title: '',
-                    amount: '',
-                    currency: 'EUR',
-                    payer: '成員A'
-                });
-
-                const addExpense = () => {
-                    if (!newExpense.value.title || !newExpense.value.amount) return;
-                    expenses.value.push({
-                        date: newExpense.value.date,
-                        category: newExpense.value.category,
-                        title: newExpense.value.title,
-                        amount: Number(newExpense.value.amount),
-                        currency: newExpense.value.currency,
-                        payer: newExpense.value.payer
-                    });
-                    newExpense.value.title = '';
-                    newExpense.value.amount = '';
-                };
-
-                const deleteExpense = (index) => {
-                    expenses.value.splice(index, 1);
-                };
-
-                // 計算已使用的公基金總額（統一換算成 EUR 顯示）
-                const totalFundUsed = computed(() => {
-                    let total = 0;
-                    expenses.value.forEach(exp => {
-                        if (exp.payer === '公基金') {
-                            let amountInEUR = exp.amount;
-                            if (exp.currency === 'TWD') {
-                                amountInEUR = exp.amount / rates.value.TWD;
-                            } else if (exp.currency === 'USD') {
-                                amountInEUR = exp.amount / rates.value.USD;
-                            }
-                            total += amountInEUR;
-                        }
-                    });
-                    return total;
-                });
-
-                // 計算剩餘公基金金額 (EUR)
-                const remainingFund = computed(() => {
-                    return fundConfig.value.initialTotal - totalFundUsed.value;
-                });
-
-                // 結算邏輯
-                const settlements = computed(() => {
-                    let balances = {};
-                    users.value.forEach(u => balances[u] = 0);
-                    let totalSpent = 0;
-
-                    expenses.value.forEach(exp => {
-                        let amountInTWD = exp.amount;
-                        if (exp.currency === 'EUR') {
-                            amountInTWD = exp.amount * rates.value.TWD;
-                        } else if (exp.currency === 'USD') {
-                            amountInTWD = (exp.amount / rates.value.USD) * rates.value.TWD;
-                        }
-                        
-                        if (exp.payer === '公基金') {
-                            totalSpent += amountInTWD;
-                        } else {
-                            balances[exp.payer] += amountInTWD;
-                            totalSpent += amountInTWD;
-                        }
-                    });
-
-                    let perPerson = totalSpent / users.value.length;
-                    let netBalances = {};
-                    users.value.forEach(u => {
-                        netBalances[u] = balances[u] - perPerson;
-                    });
-
-                    let debtors = [];
-                    let creditors = [];
-
-                    users.value.forEach(u => {
-                        let diff = netBalances[u];
-                        if (diff < -0.01) debtors.push({ name: u, amount: -diff });
-                        if (diff > 0.01) creditors.push({ name: u, amount: diff });
-                    });
-
-                    let result = [];
-                    let i = 0, j = 0;
-                    while (i < debtors.length && j < creditors.length) {
-                        let d = debtors[i];
-                        let c = creditors[j];
-                        let amt = Math.min(d.amount, c.amount);
-
-                        result.push({ from: d.name, to: c.name, amount: amt });
-
-                        d.amount -= amt;
-                        c.amount -= amt;
-
-                        if (d.amount < 0.01) i++;
-                        if (c.amount < 0.01) j++;
-                    }
-                    return result;
-                });
-
-                return {
-                    currentTab,
-                    users,
-                    payersList,
-                    tripDates,
-                    categories,
-                    fundConfig,
-                    rates,
-                    expenses,
-                    newExpense,
-                    addExpense,
-                    deleteExpense,
-                    totalFundUsed,
-                    remainingFund,
-                    settlements
-                };
-            }
-        }).mount('#app');
-    </script>
-</body>
-</html>
+                // 動態備註提示函數
+                const getPlaceholder = (cat) => {
+                    const hints = {
+                        '交通-飛機': '例如：航班編號、機場交通',
+                        '交通-火車': '例如：義大利國鐵 / 區間
