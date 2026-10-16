@@ -269,10 +269,8 @@
                     USD: 1.08
                 });
 
-                const expenses = ref([
-                    { date: '12/23', category: '晚餐', title: '威尼斯晚餐', amount: 120, currency: 'EUR', payer: '成員A' },
-                    { date: '12/24', category: '交通-公車', title: '計程車資', amount: 35, currency: 'EUR', payer: '公基金' }
-                ]);
+                // 已清空初始測試資料
+                const expenses = ref([]);
 
                 const newExpense = ref({
                     date: '12/23',
@@ -316,7 +314,6 @@
                     return amount;
                 };
 
-                // 公基金已使用總額（以 EUR 計算）
                 const totalFundUsed = computed(() => {
                     let total = 0;
                     expenses.value.forEach(exp => {
@@ -327,19 +324,16 @@
                     return total;
                 });
 
-                // 公基金剩餘現金（以 EUR 計算）
                 const remainingFund = computed(() => {
                     return fundConfig.value.initialTotal - totalFundUsed.value;
                 });
 
-                // 結算建議：僅計算「個人代墊」部分，公基金支出不參與個人債務均分
                 const settlements = computed(() => {
                     let balances = {};
                     users.value.forEach(u => balances[u] = 0);
                     let totalPersonalSpent = 0;
 
                     expenses.value.forEach(exp => {
-                        // 僅處理個人代墊，公基金支出不列入個人轉帳分攤
                         if (exp.payer !== '公基金') {
                             let amountInTWD = convertToTWD(exp.amount, exp.currency);
                             balances[exp.payer] += amountInTWD;
