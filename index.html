@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Trip Splitter</title>
+    <title>義大利10天旅行分帳系統</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         body { font-size: 15px; }
@@ -14,22 +16,26 @@
 <body class="bg-gray-50 text-gray-900 pb-20">
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-lg">
         
+        <!-- 頂部標題列 -->
         <header class="bg-rose-600 text-white p-3.5 sticky top-0 z-50 shadow-md">
-            <h1 class="text-lg font-bold text-center">Italy 10 Days Split</h1>
-            <p class="text-xs text-rose-100 text-center mt-0.5">2026.12.23 - 2027.01.03 | 4 Persons</p>
+            <h1 class="text-lg font-bold text-center">義大利 10 天旅行分帳</h1>
+            <p class="text-xs text-rose-100 text-center mt-0.5">2026.12.23 - 2027.01.03 | 4人同行</p>
         </header>
 
+        <!-- 主要內容區 -->
         <main class="flex-1 p-4 overflow-y-auto">
             
-            <!-- Tab 1 -->
+            <!-- Tab 1: 記帳/分帳頁面 -->
             <div v-show="currentTab === 'expense'">
                 
+                <!-- 新增消費表單 -->
                 <div class="bg-gray-100 p-4 rounded-xl mb-4">
-                    <h2 class="text-base font-bold mb-3 text-gray-800">Add Expense</h2>
+                    <h2 class="text-base font-bold mb-3 text-gray-800">新增消費記錄</h2>
                     <form @submit.prevent="addExpense" class="space-y-3">
                         
+                        <!-- 消費日期 -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Date</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">消費日期</label>
                             <div class="flex gap-1 overflow-x-auto pb-1">
                                 <button type="button" v-for="d in tripDates" :key="d"
                                         @click="newExpense.date = d"
@@ -40,15 +46,17 @@
                             </div>
                         </div>
 
+                        <!-- 消費類別 -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Category</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">消費類別</label>
                             <select v-model="newExpense.category" class="w-full p-2.5 text-sm border rounded-xl bg-white">
                                 <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                             </select>
                         </div>
 
+                        <!-- 項目名稱與備註 (選填) -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Title / Note (Optional)</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">項目名稱 / 備註 (選填)</label>
                             <input v-model="newExpense.title" type="text" 
                                    class="w-full p-2.5 text-sm border rounded-xl bg-white" 
                                    :placeholder="getPlaceholder(newExpense.category)">
@@ -56,22 +64,23 @@
 
                         <div class="flex gap-2">
                             <div class="flex-1">
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Amount</label>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">金額</label>
                                 <input v-model.number="newExpense.amount" type="number" step="0.01" required class="w-full p-2.5 text-sm border rounded-xl bg-white" placeholder="0.00">
                             </div>
                             <div class="w-32">
-                                <label class="block text-xs font-medium text-gray-700 mb-1">Currency</label>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">幣別</label>
                                 <select v-model="newExpense.currency" class="w-full p-2.5 text-sm border rounded-xl bg-white">
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="CNY">CNY (¥)</option>
-                                    <option value="TWD">TWD ($)</option>
-                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">歐元 (€)</option>
+                                    <option value="CNY">人民幣 (¥)</option>
+                                    <option value="TWD">台幣 ($)</option>
+                                    <option value="USD">美金 ($)</option>
                                 </select>
                             </div>
                         </div>
 
+                        <!-- 付款方式 -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">付款方式</label>
                             <div class="grid grid-cols-5 gap-1.5">
                                 <button type="button" v-for="payer in payersList" :key="payer"
                                         @click="newExpense.payer = payer"
@@ -83,14 +92,15 @@
                         </div>
 
                         <button type="submit" class="w-full bg-rose-600 text-white font-bold p-2.5 rounded-xl text-sm shadow hover:bg-rose-700 transition">
-                            Submit Record
+                            新增消費記錄
                         </button>
                     </form>
                 </div>
 
-                <h3 class="text-base font-bold mb-2 text-gray-800">Expense List</h3>
+                <!-- 消費列表 -->
+                <h3 class="text-base font-bold mb-2 text-gray-800">消費明細</h3>
                 <div v-if="expenses.length === 0" class="text-sm text-gray-500 text-center py-4 bg-white border rounded-xl mb-4">
-                    No records yet
+                    目前尚無消費記錄
                 </div>
                 <div v-else class="space-y-2 mb-4">
                     <div v-for="(exp, index) in expenses" :key="index" class="bg-white border border-gray-200 p-3 rounded-xl flex justify-between items-center shadow-sm">
@@ -98,57 +108,58 @@
                             <div class="flex items-center gap-2 mb-0.5">
                                 <span class="text-xs bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold">{{ exp.date }}</span>
                                 <span class="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded font-medium">{{ exp.category }}</span>
-                                <span v-if="exp.payer === 'Common Fund'" class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Fund Used</span>
+                                <span v-if="exp.payer === '公基金'" class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">公基金支出</span>
                                 <p class="text-sm font-bold text-gray-800">{{ exp.title || exp.category }}</p>
                             </div>
-                            <p class="text-xs text-gray-500">Payer: <span class="font-medium text-gray-700">{{ exp.payer }}</span></p>
+                            <p class="text-xs text-gray-500">付費來源: <span class="font-medium text-gray-700">{{ exp.payer }}</span></p>
                         </div>
                         <div class="text-right">
                             <p class="text-sm font-bold text-rose-600">
-                                {{ exp.currency }} {{ exp.amount.toFixed(2) }}
+                                {{ exp.currency === 'EUR' ? '歐元' : exp.currency === 'CNY' ? '人民幣' : exp.currency === 'TWD' ? '台幣' : '美金' }} 
+                                {{ exp.amount.toFixed(2) }}
                             </p>
-                            <button @click="deleteExpense(index)" class="text-xs text-red-500 underline mt-1">Delete</button>
+                            <button @click="deleteExpense(index)" class="text-xs text-red-500 underline mt-1">刪除</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Fund Dashboard -->
+                <!-- 公基金管理看板 -->
                 <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-sm">
                     <h2 class="text-sm font-bold text-amber-900 mb-2 flex justify-between items-center">
-                        <span>Common Fund Dashboard</span>
-                        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Auto Deduct</span>
+                        <span>💰 公基金管理看板</span>
+                        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">自動扣款</span>
                     </h2>
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
-                            <label class="block text-xs font-medium text-amber-800 mb-1">Total Fund (EUR)</label>
+                            <label class="block text-xs font-medium text-amber-800 mb-1">公基金總金額 (EUR)</label>
                             <input v-model.number="fundConfig.initialTotal" type="number" step="1" class="w-full p-2 text-sm border border-amber-300 rounded-lg bg-white font-bold text-amber-900">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-amber-800 mb-1">Total Used</label>
+                            <label class="block text-xs font-medium text-amber-800 mb-1">已使用總額</label>
                             <div class="p-2 text-sm font-bold text-rose-600 bg-white border border-amber-300 rounded-lg flex items-center">
                                 € {{ totalFundUsed.toFixed(2) }}
                             </div>
                         </div>
                     </div>
                     <div class="bg-white p-2.5 rounded-lg border border-amber-200 flex justify-between items-center">
-                        <span class="text-xs font-medium text-gray-600">Remaining Fund:</span>
+                        <span class="text-xs font-medium text-gray-600">公基金剩餘金額:</span>
                         <span class="text-base font-bold" :class="remainingFund >= 0 ? 'text-emerald-600' : 'text-red-600'">
-                            € {{ remainingFund.toFixed(2) }} <span class="text-xs font-normal text-gray-500">(NT$ {{ (remainingFund * rates.TWD).toFixed(0) }})</span>
+                            € {{ remainingFund.toFixed(2) }} <span class="text-xs font-normal text-gray-500">(約 NT$ {{ (remainingFund * rates.TWD).toFixed(0) }})</span>
                         </span>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Tab 2 -->
+            <!-- Tab 2: 結算頁面 -->
             <div v-show="currentTab === 'settlement'">
                 <div class="bg-rose-50 p-3.5 rounded-xl mb-4">
-                    <h2 class="text-base font-bold text-rose-800 mb-1">Settlement & Rates</h2>
-                    <p class="text-xs text-gray-600">Automatic currency conversion and optimized debt transfer suggestions.</p>
+                    <h2 class="text-base font-bold text-rose-800 mb-1">結算與匯率換算</h2>
+                    <p class="text-xs text-gray-600">自動將個人代墊與公基金支出納入總花費均分，並給出最佳轉帳建議。</p>
                 </div>
 
                 <div class="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm mb-4">
-                    <h3 class="text-sm font-bold mb-2.5 text-gray-800">Exchange Rates (Base EUR)</h3>
+                    <h3 class="text-sm font-bold mb-2.5 text-gray-800">即時匯率設定 (基準 EUR)</h3>
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">1 EUR = TWD</label>
@@ -166,13 +177,13 @@
                 </div>
 
                 <div class="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm">
-                    <h3 class="text-sm font-bold mb-2.5 text-gray-800">Transfer Suggestions</h3>
+                    <h3 class="text-sm font-bold mb-2.5 text-gray-800">最優轉帳建議</h3>
                     <div v-if="settlements.length === 0" class="text-sm text-gray-500 text-center py-4">
-                        All settled or no records yet
+                        目前帳目已結清或尚無消費記錄
                     </div>
                     <div v-else class="space-y-2">
                         <div v-for="(s, idx) in settlements" :key="idx" class="p-2.5 bg-gray-50 rounded-xl border text-sm font-medium flex justify-between items-center">
-                            <span><strong class="text-rose-600">{{ s.from }}</strong> -> <strong class="text-rose-600">{{ s.to }}</strong></span>
+                            <span><strong class="text-rose-600">{{ s.from }}</strong> 轉給 <strong class="text-rose-600">{{ s.to }}</strong></span>
                             <span class="font-bold text-gray-800">NT$ {{ s.amount.toFixed(0) }}</span>
                         </div>
                     </div>
@@ -181,12 +192,13 @@
 
         </main>
 
+        <!-- 底部導航列 -->
         <nav class="bg-white border-t border-gray-200 flex justify-around py-2.5 fixed bottom-0 left-0 right-0 max-w-md mx-auto shadow-lg z-50">
             <button @click="currentTab = 'expense'" :class="currentTab === 'expense' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-sm flex-1">
-                <span>Expenses</span>
+                <span>💰 記帳明細</span>
             </button>
             <button @click="currentTab = 'settlement'" :class="currentTab === 'settlement' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-sm flex-1">
-                <span>Settlement</span>
+                <span>⚖️ 結算對帳</span>
             </button>
         </nav>
 
@@ -198,33 +210,33 @@
         createApp({
             setup() {
                 const currentTab = ref('expense');
-                const users = ref(['Member A', 'Member B', 'Member C', 'Member D']);
-                const payersList = ['Common Fund', 'Member A', 'Member B', 'Member C', 'Member D'];
+                const users = ref(['成員A', '成員B', '成員C', '成員D']);
+                const payersList = ['公基金', '成員A', '成員B', '成員C', '成員D'];
                 
                 const tripDates = ['12/23', '12/24', '12/25', '12/26', '12/27', '12/28', '12/29', '12/30', '12/31', '01/01', '01/02', '01/03'];
                 
                 const categories = [
-                    'Flight', 'Train', 'Bus', 'Car Rental',
-                    'Breakfast', 'Lunch', 'Dinner', 'Snacks/Groceries',
-                    'Tickets', 'Activities', 'Hotel', 'Other'
+                    '交通-飛機', '交通-火車', '交通-公車', '交通-租車',
+                    '早餐', '午餐', '晚餐', '其他餐食購買',
+                    '門票', '玩樂', '住宿', '其他'
                 ];
 
                 const getPlaceholder = (cat) => {
                     const hints = {
-                        'Flight': 'e.g. Flight number',
-                        'Train': 'e.g. Train ticket',
-                        'Bus': 'e.g. Metro / Bus ticket',
-                        'Car Rental': 'e.g. Fuel & Rental',
-                        'Breakfast': 'e.g. Cafe / Bakery',
-                        'Lunch': 'e.g. Restaurant name',
-                        'Dinner': 'e.g. Booking name',
-                        'Snacks/Groceries': 'e.g. Supermarket',
-                        'Tickets': 'e.g. Museum ticket',
-                        'Activities': 'e.g. Tour guide',
-                        'Hotel': 'e.g. Accommodation balance',
-                        'Other': 'e.g. Souvenirs'
+                        '交通-飛機': '例如：航班編號、機場交通',
+                        '交通-火車': '例如：義大利國鐵 / 區間車票',
+                        '交通-公車': '例如：市區公車 / 地鐵票',
+                        '交通-租車': '例如：租車與加油費用',
+                        '早餐': '例如：飯店早餐 / 咖啡廳',
+                        '午餐': '例如：餐廳名稱或餐點',
+                        '晚餐': '例如：晚餐餐廳預訂',
+                        '其他餐食購買': '例如：超市購物、零食水',
+                        '門票': '例如：景點門票費用',
+                        '玩樂': '例如：導覽、體驗活動',
+                        '住宿': '例如：飯店尾款或住宿費',
+                        '其他': '例如：紀念品、雜支'
                     };
-                    return hints[cat] || 'Enter details...';
+                    return hints[cat] || '請輸入詳細消費內容...';
                 };
 
                 const fundConfig = ref({
@@ -239,17 +251,17 @@
                 });
 
                 const expenses = ref([
-                    { date: '12/23', category: 'Dinner', title: 'Venice Dinner', amount: 120, currency: 'EUR', payer: 'Member A' },
-                    { date: '12/24', category: 'Bus', title: 'Taxi', amount: 35, currency: 'EUR', payer: 'Common Fund' }
+                    { date: '12/23', category: '晚餐', title: '威尼斯晚餐', amount: 120, currency: 'EUR', payer: '成員A' },
+                    { date: '12/24', category: '交通-公車', title: '計程車資', amount: 35, currency: 'EUR', payer: '公基金' }
                 ]);
 
                 const newExpense = ref({
                     date: '12/23',
-                    category: 'Dinner',
+                    category: '晚餐',
                     title: '',
                     amount: '',
                     currency: 'EUR',
-                    payer: 'Common Fund'
+                    payer: '公基金'
                 });
 
                 const addExpense = () => {
@@ -288,7 +300,7 @@
                 const totalFundUsed = computed(() => {
                     let total = 0;
                     expenses.value.forEach(exp => {
-                        if (exp.payer === 'Common Fund') {
+                        if (exp.payer === '公基金') {
                             total += convertToEUR(exp.amount, exp.currency);
                         }
                     });
@@ -307,7 +319,7 @@
                     expenses.value.forEach(exp => {
                         let amountInTWD = convertToTWD(exp.amount, exp.currency);
                         
-                        if (exp.payer === 'Common Fund') {
+                        if (exp.payer === '公基金') {
                             totalSpent += amountInTWD;
                         } else {
                             balances[exp.payer] += amountInTWD;
