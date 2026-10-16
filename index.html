@@ -127,7 +127,7 @@
                 <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-sm">
                     <h2 class="text-sm font-bold text-amber-900 mb-2 flex justify-between items-center">
                         <span>💰 公基金管理看板</span>
-                        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">自動扣款</span>
+                        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">獨立水庫</span>
                     </h2>
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
@@ -142,7 +142,7 @@
                         </div>
                     </div>
                     <div class="bg-white p-2.5 rounded-lg border border-amber-200 flex justify-between items-center">
-                        <span class="text-xs font-medium text-gray-600">公基金剩餘金額:</span>
+                        <span class="text-xs font-medium text-gray-600">公基金剩餘現金:</span>
                         <span class="text-base font-bold" :class="remainingFund >= 0 ? 'text-emerald-600' : 'text-red-600'">
                             € {{ remainingFund.toFixed(2) }} <span class="text-xs font-normal text-gray-500">(約 NT$ {{ (remainingFund * rates.TWD).toFixed(0) }})</span>
                         </span>
@@ -155,7 +155,26 @@
             <div v-show="currentTab === 'settlement'">
                 <div class="bg-rose-50 p-3.5 rounded-xl mb-4">
                     <h2 class="text-base font-bold text-rose-800 mb-1">結算與匯率換算</h2>
-                    <p class="text-xs text-gray-600">自動將個人代墊與公基金支出納入總花費均分，並給出最佳轉帳建議。</p>
+                    <p class="text-xs text-gray-600">公基金獨立扣款結算，個人代墊款項獨立計算最優轉帳建議。</p>
+                </div>
+
+                <!-- 公基金結算摘要 -->
+                <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl shadow-sm mb-4">
+                    <h3 class="text-sm font-bold text-amber-900 mb-2">💰 公基金結餘與退還試算</h3>
+                    <div class="text-xs space-y-1.5 text-amber-900">
+                        <div class="flex justify-between">
+                            <span>公基金總額:</span>
+                            <span class="font-bold">€ {{ fundConfig.initialTotal.toFixed(2) }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>已使用總額:</span>
+                            <span class="font-bold text-rose-600">€ {{ totalFundUsed.toFixed(2) }}</span>
+                        </div>
+                        <div class="flex justify-between border-t border-amber-200 pt-1.5">
+                            <span>剩餘現金 (可均分退還):</span>
+                            <span class="font-bold text-emerald-700">€ {{ remainingFund.toFixed(2) }} (每人約 € {{ (remainingFund / users.length).toFixed(2) }})</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm mb-4">
@@ -177,9 +196,9 @@
                 </div>
 
                 <div class="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm">
-                    <h3 class="text-sm font-bold mb-2.5 text-gray-800">最優轉帳建議</h3>
+                    <h3 class="text-sm font-bold mb-2.5 text-gray-800">最優轉帳建議 (僅計個人代墊)</h3>
                     <div v-if="settlements.length === 0" class="text-sm text-gray-500 text-center py-4">
-                        目前帳目已結清或尚無消費記錄
+                        個人代墊帳目已結清或尚無代墊記錄
                     </div>
                     <div v-else class="space-y-2">
                         <div v-for="(s, idx) in settlements" :key="idx" class="p-2.5 bg-gray-50 rounded-xl border text-sm font-medium flex justify-between items-center">
@@ -297,6 +316,7 @@
                     return amount;
                 };
 
+                // 公基金已使用總額（以 EUR 計算）
                 const totalFundUsed = computed(() => {
                     let total = 0;
                     expenses.value.forEach(exp => {
@@ -307,27 +327,27 @@
                     return total;
                 });
 
+                // 公基金剩餘現金（以 EUR 計算）
                 const remainingFund = computed(() => {
                     return fundConfig.value.initialTotal - totalFundUsed.value;
                 });
 
+                // 結算建議：僅計算「個人代墊」部分，公基金支出不參與個人債務均分
                 const settlements = computed(() => {
                     let balances = {};
                     users.value.forEach(u => balances[u] = 0);
-                    let totalSpent = 0;
+                    let totalPersonalSpent = 0;
 
                     expenses.value.forEach(exp => {
-                        let amountInTWD = convertToTWD(exp.amount, exp.currency);
-                        
-                        if (exp.payer === '公基金') {
-                            totalSpent += amountInTWD;
-                        } else {
+                        // 僅處理個人代墊，公基金支出不列入個人轉帳分攤
+                        if (exp.payer !== '公基金') {
+                            let amountInTWD = convertToTWD(exp.amount, exp.currency);
                             balances[exp.payer] += amountInTWD;
-                            totalSpent += amountInTWD;
+                            totalPersonalSpent += amountInTWD;
                         }
                     });
 
-                    let perPerson = totalSpent / users.value.length;
+                    let perPerson = totalPersonalSpent / users.value.length;
                     let netBalances = {};
                     users.value.forEach(u => {
                         netBalances[u] = balances[u] - perPerson;
