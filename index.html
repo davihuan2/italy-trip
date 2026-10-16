@@ -4,40 +4,32 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>義大利10天旅行分帳系統</title>
-    <!-- Tailwind CSS -->
+    <title>Trip Splitter</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        body {
-            font-size: 15px;
-        }
+        body { font-size: 15px; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 pb-20">
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-lg">
         
-        <!-- 頂部標題列 -->
         <header class="bg-rose-600 text-white p-3.5 sticky top-0 z-50 shadow-md">
-            <h1 class="text-lg font-bold text-center">義大利 10 天旅行分帳</h1>
-            <p class="text-xs text-rose-100 text-center mt-0.5">2026.12.23 - 2027.01.03 | 4人同行</p>
+            <h1 class="text-lg font-bold text-center">Italy 10 Days Split</h1>
+            <p class="text-xs text-rose-100 text-center mt-0.5">2026.12.23 - 2027.01.03 | 4 Persons</p>
         </header>
 
-        <!-- 主要內容區 -->
         <main class="flex-1 p-4 overflow-y-auto">
             
-            <!-- Tab 1: 記帳/分帳頁面 -->
+            <!-- Tab 1 -->
             <div v-show="currentTab === 'expense'">
                 
-                <!-- 新增消費表單 (置頂) -->
                 <div class="bg-gray-100 p-4 rounded-xl mb-4">
-                    <h2 class="text-base font-bold mb-3 text-gray-800">新增消費記錄</h2>
+                    <h2 class="text-base font-bold mb-3 text-gray-800">Add Expense</h2>
                     <form @submit.prevent="addExpense" class="space-y-3">
                         
-                        <!-- 消費日期 (按鈕點擊選擇) -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">消費日期</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Date</label>
                             <div class="flex gap-1 overflow-x-auto pb-1">
                                 <button type="button" v-for="d in tripDates" :key="d"
                                         @click="newExpense.date = d"
@@ -48,17 +40,15 @@
                             </div>
                         </div>
 
-                        <!-- 消費類別 -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">消費類別</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Category</label>
                             <select v-model="newExpense.category" class="w-full p-2.5 text-sm border rounded-xl bg-white">
                                 <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                             </select>
                         </div>
 
-                        <!-- 項目名稱與動態備註提示 (選填) -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">項目名稱 / 備註 (選填)</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Title / Note (Optional)</label>
                             <input v-model="newExpense.title" type="text" 
                                    class="w-full p-2.5 text-sm border rounded-xl bg-white" 
                                    :placeholder="getPlaceholder(newExpense.category)">
@@ -66,23 +56,22 @@
 
                         <div class="flex gap-2">
                             <div class="flex-1">
-                                <label class="block text-xs font-medium text-gray-700 mb-1">金額</label>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Amount</label>
                                 <input v-model.number="newExpense.amount" type="number" step="0.01" required class="w-full p-2.5 text-sm border rounded-xl bg-white" placeholder="0.00">
                             </div>
                             <div class="w-32">
-                                <label class="block text-xs font-medium text-gray-700 mb-1">幣別</label>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Currency</label>
                                 <select v-model="newExpense.currency" class="w-full p-2.5 text-sm border rounded-xl bg-white">
-                                    <option value="EUR">歐元 (€)</option>
-                                    <option value="CNY">人民幣 (¥)</option>
-                                    <option value="TWD">台幣 ($)</option>
-                                    <option value="USD">美金 ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="CNY">CNY (¥)</option>
+                                    <option value="TWD">TWD ($)</option>
+                                    <option value="USD">USD ($)</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- 付款方式 (公基金排第一位) -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">付款方式</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
                             <div class="grid grid-cols-5 gap-1.5">
                                 <button type="button" v-for="payer in payersList" :key="payer"
                                         @click="newExpense.payer = payer"
@@ -94,15 +83,14 @@
                         </div>
 
                         <button type="submit" class="w-full bg-rose-600 text-white font-bold p-2.5 rounded-xl text-sm shadow hover:bg-rose-700 transition">
-                            新增消費記錄
+                            Submit Record
                         </button>
                     </form>
                 </div>
 
-                <!-- 消費列表 -->
-                <h3 class="text-base font-bold mb-2 text-gray-800">消費明細</h3>
+                <h3 class="text-base font-bold mb-2 text-gray-800">Expense List</h3>
                 <div v-if="expenses.length === 0" class="text-sm text-gray-500 text-center py-4 bg-white border rounded-xl mb-4">
-                    目前尚無消費記錄
+                    No records yet
                 </div>
                 <div v-else class="space-y-2 mb-4">
                     <div v-for="(exp, index) in expenses" :key="index" class="bg-white border border-gray-200 p-3 rounded-xl flex justify-between items-center shadow-sm">
@@ -110,58 +98,57 @@
                             <div class="flex items-center gap-2 mb-0.5">
                                 <span class="text-xs bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded font-bold">{{ exp.date }}</span>
                                 <span class="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded font-medium">{{ exp.category }}</span>
-                                <span v-if="exp.payer === '公基金'" class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">公基金支出</span>
+                                <span v-if="exp.payer === 'Common Fund'" class="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Fund Used</span>
                                 <p class="text-sm font-bold text-gray-800">{{ exp.title || exp.category }}</p>
                             </div>
-                            <p class="text-xs text-gray-500">付費來源: <span class="font-medium text-gray-700">{{ exp.payer }}</span></p>
+                            <p class="text-xs text-gray-500">Payer: <span class="font-medium text-gray-700">{{ exp.payer }}</span></p>
                         </div>
                         <div class="text-right">
                             <p class="text-sm font-bold text-rose-600">
-                                {{ exp.currency === 'EUR' ? '歐元' : exp.currency === 'CNY' ? '人民幣' : exp.currency === 'TWD' ? '台幣' : '美金' }} 
-                                {{ exp.amount.toFixed(2) }}
+                                {{ exp.currency }} {{ exp.amount.toFixed(2) }}
                             </p>
-                            <button @click="deleteExpense(index)" class="text-xs text-red-500 underline mt-1">刪除</button>
+                            <button @click="deleteExpense(index)" class="text-xs text-red-500 underline mt-1">Delete</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- 公基金管理看板 (置於最下方) -->
+                <!-- Fund Dashboard -->
                 <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-sm">
                     <h2 class="text-sm font-bold text-amber-900 mb-2 flex justify-between items-center">
-                        <span>💰 公基金管理看板</span>
-                        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">自動扣款</span>
+                        <span>Common Fund Dashboard</span>
+                        <span class="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Auto Deduct</span>
                     </h2>
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
-                            <label class="block text-xs font-medium text-amber-800 mb-1">公基金總金額 (EUR)</label>
+                            <label class="block text-xs font-medium text-amber-800 mb-1">Total Fund (EUR)</label>
                             <input v-model.number="fundConfig.initialTotal" type="number" step="1" class="w-full p-2 text-sm border border-amber-300 rounded-lg bg-white font-bold text-amber-900">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-amber-800 mb-1">已使用總額</label>
+                            <label class="block text-xs font-medium text-amber-800 mb-1">Total Used</label>
                             <div class="p-2 text-sm font-bold text-rose-600 bg-white border border-amber-300 rounded-lg flex items-center">
                                 € {{ totalFundUsed.toFixed(2) }}
                             </div>
                         </div>
                     </div>
                     <div class="bg-white p-2.5 rounded-lg border border-amber-200 flex justify-between items-center">
-                        <span class="text-xs font-medium text-gray-600">公基金剩餘金額:</span>
+                        <span class="text-xs font-medium text-gray-600">Remaining Fund:</span>
                         <span class="text-base font-bold" :class="remainingFund >= 0 ? 'text-emerald-600' : 'text-red-600'">
-                            € {{ remainingFund.toFixed(2) }} <span class="text-xs font-normal text-gray-500">(約 NT$ {{ (remainingFund * rates.TWD).toFixed(0) }})</span>
+                            € {{ remainingFund.toFixed(2) }} <span class="text-xs font-normal text-gray-500">(NT$ {{ (remainingFund * rates.TWD).toFixed(0) }})</span>
                         </span>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Tab 2: 結算頁面 -->
+            <!-- Tab 2 -->
             <div v-show="currentTab === 'settlement'">
                 <div class="bg-rose-50 p-3.5 rounded-xl mb-4">
-                    <h2 class="text-base font-bold text-rose-800 mb-1">結算與匯率換算</h2>
-                    <p class="text-xs text-gray-600">自動將個人代墊與公基金支出納入總花費均分，並給出最佳轉帳建議。</p>
+                    <h2 class="text-base font-bold text-rose-800 mb-1">Settlement & Rates</h2>
+                    <p class="text-xs text-gray-600">Automatic currency conversion and optimized debt transfer suggestions.</p>
                 </div>
 
                 <div class="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm mb-4">
-                    <h3 class="text-sm font-bold mb-2.5 text-gray-800">即時匯率設定 (基準 EUR)</h3>
+                    <h3 class="text-sm font-bold mb-2.5 text-gray-800">Exchange Rates (Base EUR)</h3>
                     <div class="grid grid-cols-3 gap-2">
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">1 EUR = TWD</label>
@@ -179,13 +166,13 @@
                 </div>
 
                 <div class="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm">
-                    <h3 class="text-sm font-bold mb-2.5 text-gray-800">最優轉帳建議</h3>
+                    <h3 class="text-sm font-bold mb-2.5 text-gray-800">Transfer Suggestions</h3>
                     <div v-if="settlements.length === 0" class="text-sm text-gray-500 text-center py-4">
-                        目前帳目已結清或尚無消費記錄
+                        All settled or no records yet
                     </div>
                     <div v-else class="space-y-2">
                         <div v-for="(s, idx) in settlements" :key="idx" class="p-2.5 bg-gray-50 rounded-xl border text-sm font-medium flex justify-between items-center">
-                            <span><strong class="text-rose-600">{{ s.from }}</strong> 轉給 <strong class="text-rose-600">{{ s.to }}</strong></span>
+                            <span><strong class="text-rose-600">{{ s.from }}</strong> -> <strong class="text-rose-600">{{ s.to }}</strong></span>
                             <span class="font-bold text-gray-800">NT$ {{ s.amount.toFixed(0) }}</span>
                         </div>
                     </div>
@@ -194,13 +181,12 @@
 
         </main>
 
-        <!-- 底部導航列 -->
         <nav class="bg-white border-t border-gray-200 flex justify-around py-2.5 fixed bottom-0 left-0 right-0 max-w-md mx-auto shadow-lg z-50">
             <button @click="currentTab = 'expense'" :class="currentTab === 'expense' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-sm flex-1">
-                <span>💰 記帳明細</span>
+                <span>Expenses</span>
             </button>
             <button @click="currentTab = 'settlement'" :class="currentTab === 'settlement' ? 'text-rose-600 font-bold' : 'text-gray-500'" class="flex flex-col items-center text-sm flex-1">
-                <span>⚖️ 結算對帳</span>
+                <span>Settlement</span>
             </button>
         </nav>
 
@@ -210,4 +196,177 @@
         const { createApp, ref, computed } = Vue;
 
         createApp({
-            setup
+            setup() {
+                const currentTab = ref('expense');
+                const users = ref(['Member A', 'Member B', 'Member C', 'Member D']);
+                const payersList = ['Common Fund', 'Member A', 'Member B', 'Member C', 'Member D'];
+                
+                const tripDates = ['12/23', '12/24', '12/25', '12/26', '12/27', '12/28', '12/29', '12/30', '12/31', '01/01', '01/02', '01/03'];
+                
+                const categories = [
+                    'Flight', 'Train', 'Bus', 'Car Rental',
+                    'Breakfast', 'Lunch', 'Dinner', 'Snacks/Groceries',
+                    'Tickets', 'Activities', 'Hotel', 'Other'
+                ];
+
+                const getPlaceholder = (cat) => {
+                    const hints = {
+                        'Flight': 'e.g. Flight number',
+                        'Train': 'e.g. Train ticket',
+                        'Bus': 'e.g. Metro / Bus ticket',
+                        'Car Rental': 'e.g. Fuel & Rental',
+                        'Breakfast': 'e.g. Cafe / Bakery',
+                        'Lunch': 'e.g. Restaurant name',
+                        'Dinner': 'e.g. Booking name',
+                        'Snacks/Groceries': 'e.g. Supermarket',
+                        'Tickets': 'e.g. Museum ticket',
+                        'Activities': 'e.g. Tour guide',
+                        'Hotel': 'e.g. Accommodation balance',
+                        'Other': 'e.g. Souvenirs'
+                    };
+                    return hints[cat] || 'Enter details...';
+                };
+
+                const fundConfig = ref({
+                    initialTotal: 1000
+                });
+
+                const rates = ref({
+                    EUR: 1,
+                    CNY: 7.8,
+                    TWD: 35.0,
+                    USD: 1.08
+                });
+
+                const expenses = ref([
+                    { date: '12/23', category: 'Dinner', title: 'Venice Dinner', amount: 120, currency: 'EUR', payer: 'Member A' },
+                    { date: '12/24', category: 'Bus', title: 'Taxi', amount: 35, currency: 'EUR', payer: 'Common Fund' }
+                ]);
+
+                const newExpense = ref({
+                    date: '12/23',
+                    category: 'Dinner',
+                    title: '',
+                    amount: '',
+                    currency: 'EUR',
+                    payer: 'Common Fund'
+                });
+
+                const addExpense = () => {
+                    if (!newExpense.value.amount) return;
+                    expenses.value.push({
+                        date: newExpense.value.date,
+                        category: newExpense.value.category,
+                        title: newExpense.value.title.trim(),
+                        amount: Number(newExpense.value.amount),
+                        currency: newExpense.value.currency,
+                        payer: newExpense.value.payer
+                    });
+                    newExpense.value.title = '';
+                    newExpense.value.amount = '';
+                };
+
+                const deleteExpense = (index) => {
+                    expenses.value.splice(index, 1);
+                };
+
+                const convertToTWD = (amount, currency) => {
+                    if (currency === 'EUR') return amount * rates.value.TWD;
+                    if (currency === 'CNY') return (amount / rates.value.CNY) * rates.value.TWD;
+                    if (currency === 'USD') return (amount / rates.value.USD) * rates.value.TWD;
+                    return amount;
+                };
+
+                const convertToEUR = (amount, currency) => {
+                    if (currency === 'EUR') return amount;
+                    if (currency === 'CNY') return amount / rates.value.CNY;
+                    if (currency === 'USD') return amount / rates.value.USD;
+                    if (currency === 'TWD') return amount / rates.value.TWD;
+                    return amount;
+                };
+
+                const totalFundUsed = computed(() => {
+                    let total = 0;
+                    expenses.value.forEach(exp => {
+                        if (exp.payer === 'Common Fund') {
+                            total += convertToEUR(exp.amount, exp.currency);
+                        }
+                    });
+                    return total;
+                });
+
+                const remainingFund = computed(() => {
+                    return fundConfig.value.initialTotal - totalFundUsed.value;
+                });
+
+                const settlements = computed(() => {
+                    let balances = {};
+                    users.value.forEach(u => balances[u] = 0);
+                    let totalSpent = 0;
+
+                    expenses.value.forEach(exp => {
+                        let amountInTWD = convertToTWD(exp.amount, exp.currency);
+                        
+                        if (exp.payer === 'Common Fund') {
+                            totalSpent += amountInTWD;
+                        } else {
+                            balances[exp.payer] += amountInTWD;
+                            totalSpent += amountInTWD;
+                        }
+                    });
+
+                    let perPerson = totalSpent / users.value.length;
+                    let netBalances = {};
+                    users.value.forEach(u => {
+                        netBalances[u] = balances[u] - perPerson;
+                    });
+
+                    let debtors = [];
+                    let creditors = [];
+
+                    users.value.forEach(u => {
+                        let diff = netBalances[u];
+                        if (diff < -0.01) debtors.push({ name: u, amount: -diff });
+                        if (diff > 0.01) creditors.push({ name: u, amount: diff });
+                    });
+
+                    let result = [];
+                    let i = 0, j = 0;
+                    while (i < debtors.length && j < creditors.length) {
+                        let d = debtors[i];
+                        let c = creditors[j];
+                        let amt = Math.min(d.amount, c.amount);
+
+                        result.push({ from: d.name, to: c.name, amount: amt });
+
+                        d.amount -= amt;
+                        c.amount -= amt;
+
+                        if (d.amount < 0.01) i++;
+                        if (c.amount < 0.01) j++;
+                    }
+                    return result;
+                });
+
+                return {
+                    currentTab,
+                    users,
+                    payersList,
+                    tripDates,
+                    categories,
+                    getPlaceholder,
+                    fundConfig,
+                    rates,
+                    expenses,
+                    newExpense,
+                    addExpense,
+                    deleteExpense,
+                    totalFundUsed,
+                    remainingFund,
+                    settlements
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
